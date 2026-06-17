@@ -3,12 +3,15 @@
 ## Project Overview
 Store visit scheduling and management system for Material Depot. Separate repo/app from the existing audit+install dashboard. Plain HTML/CSS/JS, no framework, no build step.
 
-- **Local path**: `/Users/dhruv/Projects/material-depot-site/Visit Schedule Site/`
+- **Local path**: `/Users/dhruv/Projects/visit-schedule-site/`
+- **GitHub**: https://github.com/daaku-daddy/visit-schedule-site (branch: `master`)
+- **Live URL**: https://visit-schedule-site.vercel.app
+- **Vercel project**: `material-depot1/visit-schedule-site`
+- **Supabase URL**: `https://dzilftvisjgckmefpzxk.supabase.co`
 - **Stack**: Plain HTML/CSS/JS · Supabase REST API (raw fetch) · Vercel static hosting
-- **New Supabase project**: separate from the audit/install Supabase project
-- **Deploy**: Vercel (new project, separate from `material-depot1/material-depot-site`)
+- **Session key**: `vs_user` in localStorage (not `md_user` — separate from audit/install app)
 
-## Files (to be created)
+## Files
 | File | Role |
 |---|---|
 | `index.html` | Redirect to Login.html |
@@ -142,8 +145,7 @@ vercel --prod
 - **Footfall data** — historical per-store per-hour estimates, provided by user (pending as of 2026-06-17), to be stored in `stores.footfall_data`
 
 ## Pending / To Confirm
-- Footfall data per store per hour (user to provide on 2026-06-18)
-- Kylas API key and field mapping for visit/activity sync
-- Supabase project URL and anon key (new project to be created)
-- Vercel project name for this app
-- List of stores and their BM counts
+- Footfall data per store per hour (user to provide — stored in `stores.footfall_data` jsonb)
+- Kylas API key and field mapping for visit/activity sync (Vercel cron job to be built)
+- Store list + BM counts (can be added via Admin → Stores once deployed)
+- First admin user must be seeded manually in Supabase SQL editor (see schema.sql comment)
