@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Visit Schedule — Pre Sales</title>
 <style>
-  :root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;}
+  :root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;--purple:#5b3aa6;--purplebg:#efeaf8;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
+
   header{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:14px;height:54px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);}
   .logo{width:32px;height:32px;border-radius:8px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:14px;flex:0 0 auto;}
   .brand .t{font-size:10px;color:#9fb2cd;letter-spacing:1px;font-weight:700;}
@@ -15,38 +16,105 @@
   .hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
   .user-pill{font-size:12.5px;color:#cdd8e8;}
   .signout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#cdd8e8;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+  .signout-btn:hover{background:rgba(255,255,255,.2);}
 
-  .controls{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-  .store-select{padding:9px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);background:#fff;min-width:220px;}
+  .controls{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:54px;z-index:40;}
+  .store-select{padding:8px 12px;border:2px solid var(--line);border-radius:9px;font-size:13.5px;color:var(--ink);background:#fff;min-width:200px;font-weight:600;}
   .store-select:focus{outline:none;border-color:var(--blue);}
-  .day-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
-  .day-chip{flex:0 0 auto;padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:2px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;}
+  .day-nav{display:flex;gap:6px;overflow-x:auto;flex:1;}
+  .day-chip{flex:0 0 auto;padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:2px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;transition:all .15s;}
   .day-chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
   .day-chip:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+  .btn-schedule{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto;}
+  .btn-schedule:hover{background:var(--navy2);}
 
-  .main{padding:20px;}
-  .slot-grid{display:grid;gap:10px;}
-  .slot-row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
-  .slot-time{font-size:13.5px;font-weight:800;color:var(--ink);min-width:120px;}
-  .slot-bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden;}
+  .content-area{display:grid;grid-template-columns:1fr 380px;gap:16px;padding:16px;align-items:start;}
+  @media(max-width:960px){.content-area{grid-template-columns:1fr;}}
+
+  /* --- Slot grid --- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(20,40,80,.06);}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .panel-head h2{font-size:15px;font-weight:800;color:var(--navy);}
+  .panel-sub{font-size:12px;color:var(--muted);}
+
+  .legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);}
+  .legend span{display:flex;align-items:center;gap:4px;}
+  .ldot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+  .slot-row{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;cursor:pointer;transition:background .12s;}
+  .slot-row:last-child{border-bottom:0;}
+  .slot-row:hover{background:#f5f8fd;}
+  .slot-row:hover .slot-hint{opacity:1;}
+  .slot-time{font-size:13px;font-weight:800;color:var(--ink);min-width:130px;}
+  .slot-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;}
+  .slot-bar{flex:1;height:7px;border-radius:4px;background:#eef1f6;overflow:hidden;}
   .slot-bar-fill{height:100%;border-radius:4px;transition:width .3s;}
-  .slot-count{font-size:13px;font-weight:700;min-width:80px;text-align:right;}
-  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;border-radius:20px;padding:4px 10px;white-space:nowrap;}
-  .bg-green{background:var(--greenbg);color:var(--green);}
-  .bg-orange{background:var(--amberbg);color:var(--amber);}
-  .bg-red{background:var(--redbg);color:var(--red);}
-  .bg-grey{background:#eef1f6;color:var(--muted);}
+  .slot-badge{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;white-space:nowrap;}
+  .sb-green{background:var(--greenbg);color:var(--green);}
+  .sb-orange{background:var(--amberbg);color:var(--amber);}
+  .sb-red{background:var(--redbg);color:var(--red);}
+  .slot-count{font-size:12px;color:var(--muted);min-width:64px;text-align:right;}
+  .slot-hint{font-size:11px;color:var(--blue);font-weight:700;opacity:0;transition:opacity .12s;white-space:nowrap;}
 
-  .empty{text-align:center;padding:60px 20px;color:var(--muted);}
-  .empty .e-ico{font-size:40px;margin-bottom:12px;}
-  .empty .e-msg{font-size:15px;font-weight:700;}
-  .empty .e-sub{font-size:13px;margin-top:6px;}
-  .loading{text-align:center;padding:60px;color:var(--muted);}
-  .spinner{display:inline-block;width:22px;height:22px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
+  /* --- Visits panel --- */
+  .visit-card{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;}
+  .visit-card:last-child{border-bottom:0;}
+  .vc-time{font-size:12px;font-weight:800;color:var(--navy);background:#eef3fb;border-radius:6px;padding:3px 8px;white-space:nowrap;flex:0 0 auto;margin-top:2px;}
+  .vc-name{font-size:13.5px;font-weight:800;}
+  .vc-phone{font-size:12px;color:var(--muted);margin-top:1px;}
+  .vc-cats{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .cat-tag{font-size:10.5px;font-weight:700;background:#eef1f6;color:var(--muted);border-radius:20px;padding:2px 8px;}
+  .vc-notes{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;}
+  .chip{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 8px;}
+  .c-scheduled{background:#eef1f6;color:var(--muted);}
+  .c-arrived{background:var(--greenbg);color:var(--green);}
+  .c-bm_assigned{background:#e4f0fb;color:var(--blue);}
+  .c-completed{background:var(--greenbg);color:var(--green);}
+  .vc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+  .btn-del{background:transparent;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;}
+  .btn-del:hover{border-color:var(--red);color:var(--red);}
+
+  /* --- Empty / loading --- */
+  .empty{text-align:center;padding:48px 16px;color:var(--muted);}
+  .empty .e-ico{font-size:36px;margin-bottom:10px;}
+  .empty .e-msg{font-size:14px;font-weight:700;}
+  .empty .e-sub{font-size:12.5px;margin-top:5px;}
+  .loading-row{text-align:center;padding:40px;color:var(--muted);}
+  .spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  .legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin-left:auto;}
-  .legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;}
+  /* --- Modal --- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:1;}
+  .modal-head h3{font-size:16px;font-weight:800;color:var(--navy);}
+  .modal-close{margin-left:auto;background:transparent;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px;}
+  .modal-body{padding:20px;}
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue);}
+  .form-group textarea{min-height:72px;resize:vertical;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .cat-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .cat-btn{border:2px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .12s;}
+  .cat-btn.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+  .form-error{background:var(--redbg);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:10px;display:none;}
+  .form-error.show{display:block;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;}
+  .btn-cancel{background:#f0f2f5;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);}
+  .btn-primary{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-primary:hover{background:var(--navy2);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .no-store{display:flex;align-items:center;justify-content:center;min-height:320px;padding:40px;text-align:center;color:var(--muted);grid-column:1/-1;}
+  .no-store .e-ico{font-size:48px;margin-bottom:16px;}
+  .no-store .e-msg{font-size:16px;font-weight:700;color:var(--ink);}
+  .no-store .e-sub{font-size:13px;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -61,35 +129,120 @@
 
 <div class="controls">
   <select class="store-select" id="storeSelect" onchange="onStoreChange(this.value)">
-    <option value="">Select a store…</option>
+    <option value="">Select store…</option>
   </select>
   <div class="day-nav" id="dayNav"></div>
-  <div class="legend">
-    <span><span class="legend-dot" style="background:var(--green)"></span>Free</span>
-    <span><span class="legend-dot" style="background:var(--amber)"></span>Busy</span>
-    <span><span class="legend-dot" style="background:var(--red)"></span>Full</span>
+  <button class="btn-schedule" onclick="openSchedule(null)">&#43; Schedule Visit</button>
+</div>
+
+<div class="content-area" id="contentArea">
+  <div class="no-store">
+    <div>
+      <div class="e-ico">&#127978;</div>
+      <div class="e-msg">Select a store to get started</div>
+      <div class="e-sub">You'll see slot capacity and today's visits.</div>
+    </div>
   </div>
 </div>
 
-<div class="main" id="main">
-  <div class="empty">
-    <div class="e-ico">&#128202;</div>
-    <div class="e-msg">Select a store to view slot capacity</div>
-    <div class="e-sub">Slots are colour-coded by visit load vs BM availability.</div>
+<!-- Schedule Visit Modal -->
+<div class="overlay" id="schedOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Schedule Visit</h3>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Customer Name &#42;</label>
+          <input id="fName" type="text" placeholder="Full name"/>
+        </div>
+        <div class="form-group">
+          <label>Phone &#42;</label>
+          <input id="fPhone" type="tel" inputmode="numeric" placeholder="10-digit number"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Store &#42;</label>
+        <select id="fStore" onchange="onFormStoreChange(this.value)">
+          <option value="">Select store…</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Visit Date &#42;</label>
+          <input id="fDate" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>Time Slot &#42;</label>
+          <select id="fTime">
+            <option value="">Select time…</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="13:00">1:00 PM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="19:00">7:00 PM</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Product Categories</label>
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+      <div class="form-group">
+        <label>Pre-Sales Notes</label>
+        <textarea id="fNotes" placeholder="Budget, requirements, any context for the store team…"></textarea>
+      </div>
+      <div class="form-error" id="fErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="schedBtn" onclick="doSchedule()">Schedule Visit</button>
+    </div>
   </div>
 </div>
+
+<div id="toast"></div>
 
 <script>
 const SB_URL='https://dzilftvisjgckmefpzxk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWxmdHZpc2pnY2ttZWZwenhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Njg0MTksImV4cCI6MjA5NzI0NDQxOX0.O-ZzJBs7TYEmXvVDf_7y70-skwSh7Ve4DuM-kBfXjP0';
 const SESSION_KEY='vs_user';
-const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
 async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
+async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});if(!r.ok)throw new Error('Delete failed ('+r.status+')');return true;}
+
+const CATEGORIES=['Flooring','Wallpaper','Modular Wardrobes','False Ceiling','Painting','Furniture','Others'];
+const SLOTS=[
+  {hour:9,value:'09:00',label:'9 AM – 10 AM'},
+  {hour:10,value:'10:00',label:'10 AM – 11 AM'},
+  {hour:11,value:'11:00',label:'11 AM – 12 PM'},
+  {hour:12,value:'12:00',label:'12 PM – 1 PM'},
+  {hour:13,value:'13:00',label:'1 PM – 2 PM'},
+  {hour:14,value:'14:00',label:'2 PM – 3 PM'},
+  {hour:15,value:'15:00',label:'3 PM – 4 PM'},
+  {hour:16,value:'16:00',label:'4 PM – 5 PM'},
+  {hour:17,value:'17:00',label:'5 PM – 6 PM'},
+  {hour:18,value:'18:00',label:'6 PM – 7 PM'},
+  {hour:19,value:'19:00',label:'7 PM – 8 PM'},
+];
+const STATUS_LABEL={scheduled:'Scheduled',arrived:'Arrived',bm_assigned:'BM Assigned',completed:'Completed'};
 
 let SESSION=null;
+let allStores=[];
 let selectedStore=null;
 let selectedDay=dateStr(0);
+let dayVisits=[];
+let selectedCats=[];
 let pollTm=null;
 
 function getSession(){
@@ -99,20 +252,32 @@ function getSession(){
 }
 function signOut(){localStorage.removeItem(SESSION_KEY);window.location.href='Login.html';}
 
-function dateStr(offsetDays){
-  const d=new Date();d.setDate(d.getDate()+offsetDays);
-  return d.toISOString().slice(0,10);
+let toastTm=null;
+function toast(msg,err=false){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.background=err?'var(--red)':'var(--ink)';
+  t.classList.add('show');clearTimeout(toastTm);toastTm=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function closeModal(){document.getElementById('schedOverlay').classList.remove('open');}
+
+function dateStr(offset){
+  const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10);
 }
 function fmtDay(d,i){
   const dt=new Date(d+'T00:00:00');
   const label=i===0?'Today':dt.toLocaleDateString('en-IN',{weekday:'short'});
-  const num=dt.getDate();
-  return label+' '+num;
+  return label+' '+dt.getDate();
 }
+function fmtTime(t){
+  if(!t)return '';
+  const[h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM';return (h%12||12)+':'+(m<10?'0'+m:m)+' '+ap;
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function buildDayNav(){
-  const nav=document.getElementById('dayNav');
-  nav.innerHTML=Array.from({length:7},(_,i)=>{
+  document.getElementById('dayNav').innerHTML=Array.from({length:7},(_,i)=>{
     const d=dateStr(i);
     return '<div class="day-chip'+(d===selectedDay?' active':'')+'" onclick="selectDay(\''+d+'\')">'+(fmtDay(d,i))+'</div>';
   }).join('');
@@ -121,74 +286,215 @@ function buildDayNav(){
 function selectDay(d){
   selectedDay=d;
   buildDayNav();
-  if(selectedStore)loadSlots();
+  if(selectedStore)loadData();
 }
 
 async function loadStores(){
-  const stores=await sbGet('stores?select=id,name,bm_count,footfall_data&order=name.asc');
+  const res=await sbGet('stores?select=id,name,bm_count,footfall_data&order=name.asc');
+  allStores=Array.isArray(res)?res:[];
   const sel=document.getElementById('storeSelect');
-  if(!Array.isArray(stores)||!stores.length){
-    sel.innerHTML='<option value="">No stores set up yet</option>';
+  if(!allStores.length){
+    sel.innerHTML='<option value="">No stores set up yet — add them in Admin</option>';
     return;
   }
-  sel.innerHTML='<option value="">Select a store…</option>'+
-    stores.map(s=>'<option value="'+s.id+'" data-bm="'+s.bm_count+'" data-ff="'+encodeURIComponent(JSON.stringify(s.footfall_data||{}))+'">'+s.name+'</option>').join('');
+  sel.innerHTML='<option value="">Select store…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
+  populateFormStore();
+}
+
+function populateFormStore(){
+  const sel=document.getElementById('fStore');
+  sel.innerHTML='<option value="">Select store…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
+  if(selectedStore)sel.value=selectedStore.id;
 }
 
 function onStoreChange(storeId){
-  const sel=document.getElementById('storeSelect');
-  const opt=sel.options[sel.selectedIndex];
-  if(!storeId){selectedStore=null;document.getElementById('main').innerHTML='<div class="empty"><div class="e-ico">&#128202;</div><div class="e-msg">Select a store to view slot capacity</div></div>';return;}
-  selectedStore={
-    id:storeId,
-    bm_count:parseInt(opt.dataset.bm)||1,
-    footfall_data:JSON.parse(decodeURIComponent(opt.dataset.ff||'{}'))
-  };
-  loadSlots();
+  selectedStore=storeId?allStores.find(s=>s.id===storeId)||null:null;
+  if(!selectedStore){
+    document.getElementById('contentArea').innerHTML='<div class="no-store"><div><div class="e-ico">&#127978;</div><div class="e-msg">Select a store to get started</div><div class="e-sub">You\'ll see slot capacity and today\'s visits.</div></div></div>';
+    return;
+  }
+  document.getElementById('fStore').value=storeId;
+  loadData();
   clearInterval(pollTm);
-  pollTm=setInterval(loadSlots,60000);
+  pollTm=setInterval(loadData,60000);
 }
 
-const SLOTS=[
-  {hour:9,label:'9 AM – 10 AM'},{hour:10,label:'10 AM – 11 AM'},{hour:11,label:'11 AM – 12 PM'},
-  {hour:12,label:'12 PM – 1 PM'},{hour:13,label:'1 PM – 2 PM'},{hour:14,label:'2 PM – 3 PM'},
-  {hour:15,label:'3 PM – 4 PM'},{hour:16,label:'4 PM – 5 PM'},{hour:17,label:'5 PM – 6 PM'},
-  {hour:18,label:'6 PM – 7 PM'},{hour:19,label:'7 PM – 8 PM'}
-];
+function onFormStoreChange(storeId){
+  // keep form store select in sync, no side effects needed
+}
 
-async function loadSlots(){
+async function loadData(){
   if(!selectedStore)return;
-  document.getElementById('main').innerHTML='<div class="loading"><span class="spinner"></span></div>';
-  const visits=await sbGet('store_visits?store_id=eq.'+selectedStore.id+'&visit_date=eq.'+selectedDay+'&select=visit_time,visit_status&visit_status=neq.completed');
-  const vArr=Array.isArray(visits)?visits:[];
-  const counts={};
-  vArr.forEach(v=>{
-    const h=parseInt((v.visit_time||'').split(':')[0]);
-    if(h>=9&&h<=19)counts[h]=(counts[h]||0)+1;
-  });
-  const bmCount=selectedStore.bm_count||1;
-  const ff=selectedStore.footfall_data||{};
+  document.getElementById('contentArea').innerHTML=`
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Slot Capacity</h2>
+        <div class="legend">
+          <span><span class="ldot" style="background:var(--green)"></span>Free &lt;50%</span>
+          <span><span class="ldot" style="background:var(--amber)"></span>Busy 50–80%</span>
+          <span><span class="ldot" style="background:var(--red)"></span>Full ≥80%</span>
+        </div>
+      </div>
+      <div id="slotGrid"><div class="loading-row"><span class="spinner"></span></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="visitsPanelTitle">Visits</h2>
+        <span class="panel-sub" id="visitsPanelSub"></span>
+      </div>
+      <div id="visitsList"><div class="loading-row"><span class="spinner"></span></div></div>
+    </div>`;
+
+  const [visitsRes]=await Promise.all([
+    sbGet('store_visits?store_id=eq.'+selectedStore.id+'&visit_date=eq.'+selectedDay+'&order=visit_time.asc&select=*')
+  ]);
+  dayVisits=Array.isArray(visitsRes)?visitsRes:[];
+  renderSlots();
+  renderVisitsList();
+}
+
+function renderSlots(){
+  const store=allStores.find(s=>s.id===selectedStore.id)||selectedStore;
+  const bmCount=store.bm_count||1;
+  const ff=store.footfall_data||{};
   const rows=SLOTS.map(s=>{
-    const scheduled=counts[s.hour]||0;
+    const scheduled=dayVisits.filter(v=>{
+      const h=parseInt((v.visit_time||'').split(':')[0]);
+      return h===s.hour&&v.visit_status!=='completed';
+    }).length;
     const footfall=ff[s.hour]||ff[String(s.hour)]||0;
     const load=(scheduled+footfall)/bmCount;
     const pct=Math.min(100,Math.round(load*100));
     let cls,label,barColor;
-    if(load<0.5){cls='bg-green';label='Free';barColor='var(--green)';}
-    else if(load<0.8){cls='bg-orange';label='Busy';barColor='var(--amber)';}
-    else{cls='bg-red';label='Full';barColor='var(--red)';}
-    return '<div class="slot-row">'+
+    if(load<0.5){cls='sb-green';label='Free';barColor='var(--green)';}
+    else if(load<0.8){cls='sb-orange';label='Busy';barColor='var(--amber)';}
+    else{cls='sb-red';label='Full';barColor='var(--red)';}
+    return '<div class="slot-row" onclick="openSchedule(\''+s.value+'\')">'+
       '<div class="slot-time">'+s.label+'</div>'+
-      '<div style="flex:1;display:flex;align-items:center;gap:10px">'+
+      '<div class="slot-bar-wrap">'+
         '<div class="slot-bar"><div class="slot-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
-        '<span class="badge '+cls+'">'+label+'</span>'+
+        '<span class="slot-badge '+cls+'">'+label+'</span>'+
       '</div>'+
-      '<div class="slot-count" style="color:var(--muted)">'+scheduled+' visit'+(scheduled===1?'':'s')+'</div>'+
+      '<div class="slot-count">'+scheduled+' visit'+(scheduled===1?'':'s')+'</div>'+
+      '<div class="slot-hint">+ Schedule</div>'+
     '</div>';
   }).join('');
-  document.getElementById('main').innerHTML='<div class="slot-grid">'+rows+'</div>';
+  const el=document.getElementById('slotGrid');
+  if(el)el.innerHTML=rows;
 }
 
+function renderVisitsList(){
+  const dt=new Date(selectedDay+'T00:00:00');
+  const dayLabel=dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+  const el=document.getElementById('visitsList');
+  const title=document.getElementById('visitsPanelTitle');
+  const sub=document.getElementById('visitsPanelSub');
+  if(title)title.textContent='Visits — '+dayLabel;
+  if(sub)sub.textContent=dayVisits.length+' scheduled';
+  if(!el)return;
+  if(!dayVisits.length){
+    el.innerHTML='<div class="empty"><div class="e-ico">&#128197;</div><div class="e-msg">No visits on this day</div><div class="e-sub">Click a slot or "+ Schedule Visit" to add one.</div></div>';
+    return;
+  }
+  el.innerHTML=dayVisits.map(v=>{
+    const cats=Array.isArray(v.categories)?v.categories:[];
+    const stLabel=STATUS_LABEL[v.visit_status]||v.visit_status;
+    return '<div class="visit-card">'+
+      '<div class="vc-time">'+fmtTime(v.visit_time)+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="vc-name">'+esc(v.customer_name)+'</div>'+
+        '<div class="vc-phone">'+esc(v.phone||'')+'</div>'+
+        (cats.length?'<div class="vc-cats">'+cats.map(c=>'<span class="cat-tag">'+esc(c)+'</span>').join('')+'</div>':'')+
+        (v.presales_notes?'<div class="vc-notes">'+esc(v.presales_notes)+'</div>':'')+
+        '<div class="vc-footer">'+
+          '<span class="chip c-'+v.visit_status+'">'+stLabel+'</span>'+
+          (v.visit_status==='scheduled'?'<button class="btn-del" onclick="deleteVisit(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Cancel visit</button>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+/* --- Schedule Visit --- */
+function openSchedule(timeValue){
+  if(!allStores.length){toast('No stores set up yet — add them in Admin',true);return;}
+  selectedCats=[];
+  document.getElementById('fName').value='';
+  document.getElementById('fPhone').value='';
+  document.getElementById('fDate').value=selectedDay;
+  document.getElementById('fTime').value=timeValue||'';
+  document.getElementById('fNotes').value='';
+  document.getElementById('fErr').classList.remove('show');
+  document.getElementById('schedBtn').disabled=false;
+  document.getElementById('schedBtn').textContent='Schedule Visit';
+  populateFormStore();
+  if(selectedStore)document.getElementById('fStore').value=selectedStore.id;
+  buildCatGrid();
+  document.getElementById('schedOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),50);
+}
+
+function buildCatGrid(){
+  document.getElementById('catGrid').innerHTML=CATEGORIES.map(c=>
+    '<button type="button" class="cat-btn'+(selectedCats.includes(c)?' active':'')+'" onclick="toggleCat(\''+c+'\')">'+esc(c)+'</button>'
+  ).join('');
+}
+
+function toggleCat(c){
+  if(selectedCats.includes(c))selectedCats=selectedCats.filter(x=>x!==c);
+  else selectedCats.push(c);
+  buildCatGrid();
+}
+
+async function doSchedule(){
+  const err=document.getElementById('fErr');err.classList.remove('show');
+  const name=document.getElementById('fName').value.trim();
+  const phone=document.getElementById('fPhone').value.trim();
+  const storeId=document.getElementById('fStore').value;
+  const date=document.getElementById('fDate').value;
+  const time=document.getElementById('fTime').value;
+  const notes=document.getElementById('fNotes').value.trim();
+
+  if(!name){err.textContent='Customer name is required.';err.classList.add('show');return;}
+  if(!phone||!/^\d{10}$/.test(phone.replace(/\s/g,''))){err.textContent='Enter a valid 10-digit phone number.';err.classList.add('show');return;}
+  if(!storeId){err.textContent='Select a store.';err.classList.add('show');return;}
+  if(!date){err.textContent='Select a visit date.';err.classList.add('show');return;}
+  if(!time){err.textContent='Select a time slot.';err.classList.add('show');return;}
+
+  const btn=document.getElementById('schedBtn');
+  btn.disabled=true;btn.textContent='Scheduling…';
+  try{
+    await sbPost('store_visits',{
+      store_id:storeId,
+      customer_name:name,
+      phone:phone.replace(/\s/g,''),
+      visit_date:date,
+      visit_time:time,
+      categories:selectedCats,
+      presales_notes:notes||null,
+      visit_status:'scheduled'
+    });
+    toast('Visit scheduled for '+name);
+    closeModal();
+    if(selectedStore&&storeId===selectedStore.id&&date===selectedDay)loadData();
+  }catch(e){
+    err.textContent='Failed to schedule — check your connection and try again.';err.classList.add('show');
+    btn.disabled=false;btn.textContent='Schedule Visit';
+  }
+}
+
+async function deleteVisit(id,name){
+  if(!confirm('Cancel the visit for '+name+'? This cannot be undone.'))return;
+  try{
+    await sbDel('store_visits',id);
+    toast('Visit cancelled');
+    loadData();
+  }catch(e){
+    toast('Failed to cancel — try again',true);
+  }
+}
+
+/* --- Init --- */
 SESSION=getSession();
 if(SESSION){
   document.getElementById('userPill').textContent=SESSION.name;

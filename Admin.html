@@ -241,6 +241,25 @@
   </div>
 </div>
 
+<!-- Footfall Modal -->
+<div class="overlay" id="footfallOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="ffModalTitle">Set Expected Footfall</h3>
+      <button class="modal-close" onclick="closeModal('footfallOverlay')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Enter expected walk-in footfall per hour slot. Used by Pre Sales to calculate slot load alongside scheduled visits.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ffGrid"></div>
+      <div class="form-error" id="ffErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('footfallOverlay')">Cancel</button>
+      <button class="btn-primary" id="ffSaveBtn" onclick="saveFootfall()">Save Footfall</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Delete Modal -->
 <div class="overlay" id="confirmOverlay">
   <div class="modal confirm-modal">
@@ -537,17 +556,22 @@ async function renderStores(){
 
 function renderStoreCards(stores){
   if(!stores.length)return '<div class="empty"><div class="e-ico">&#127978;</div><div class="e-msg">No stores yet. Add your first store.</div></div>';
-  return stores.map(s=>`
-    <div class="store-card">
+  return stores.map(s=>{
+    const ff=s.footfall_data||{};
+    const ffTotal=Object.values(ff).reduce((a,b)=>a+(Number(b)||0),0);
+    return `<div class="store-card">
       <div class="sc-name">${esc(s.name)}</div>
       <div class="sc-loc">${esc(s.location||'No location set')}</div>
       <div class="sc-meta">
         <div class="sc-stat"><b>${s.bm_count||0}</b>BM Target</div>
+        <div class="sc-stat"><b>${ffTotal||'—'}</b>Daily Footfall</div>
       </div>
       <div class="sc-actions">
         <button class="btn-icon" onclick="openEditStore('${s.id}')">Edit</button>
+        <button class="btn-icon" onclick="openFootfall('${s.id}')">Set Footfall</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function openAddStore(){
@@ -598,6 +622,54 @@ async function saveStore(){
     err.textContent='Error saving — please try again.';err.classList.add('show');
   }finally{
     btn.disabled=false;btn.textContent=editingStoreId?'Save Changes':'Add Store';
+  }
+}
+
+/* ---------- FOOTFALL ---------- */
+const FF_SLOTS=[
+  {hour:9,label:'9 AM'},{hour:10,label:'10 AM'},{hour:11,label:'11 AM'},
+  {hour:12,label:'12 PM'},{hour:13,label:'1 PM'},{hour:14,label:'2 PM'},
+  {hour:15,label:'3 PM'},{hour:16,label:'4 PM'},{hour:17,label:'5 PM'},
+  {hour:18,label:'6 PM'},{hour:19,label:'7 PM'}
+];
+let editingFootfallStoreId=null;
+
+function openFootfall(id){
+  const s=allStores.find(x=>x.id===id);
+  if(!s)return;
+  editingFootfallStoreId=id;
+  document.getElementById('ffModalTitle').textContent='Set Footfall — '+s.name;
+  const ff=s.footfall_data||{};
+  document.getElementById('ffGrid').innerHTML=FF_SLOTS.map(sl=>
+    '<div style="display:flex;align-items:center;gap:8px;background:#f7f9fc;border-radius:8px;padding:8px 10px">'+
+      '<span style="font-size:12.5px;font-weight:700;color:var(--muted);min-width:38px">'+sl.label+'</span>'+
+      '<input id="ff_'+sl.hour+'" type="number" min="0" value="'+(ff[sl.hour]||ff[String(sl.hour)]||0)+'" style="width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;font-size:13px;text-align:center"/>'+
+      '<span style="font-size:11.5px;color:var(--muted)">walk-ins</span>'+
+    '</div>'
+  ).join('');
+  document.getElementById('ffErr').classList.remove('show');
+  document.getElementById('ffSaveBtn').disabled=false;
+  document.getElementById('ffSaveBtn').textContent='Save Footfall';
+  openModal('footfallOverlay');
+}
+
+async function saveFootfall(){
+  const footfall_data={};
+  FF_SLOTS.forEach(sl=>{
+    const v=parseInt(document.getElementById('ff_'+sl.hour).value)||0;
+    footfall_data[sl.hour]=v;
+  });
+  const btn=document.getElementById('ffSaveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    await sbPatch('stores',editingFootfallStoreId,{footfall_data});
+    toast('Footfall data saved');
+    closeModal('footfallOverlay');
+    await renderStores();
+  }catch(e){
+    document.getElementById('ffErr').textContent='Error saving — please try again.';
+    document.getElementById('ffErr').classList.add('show');
+    btn.disabled=false;btn.textContent='Save Footfall';
   }
 }
 
