@@ -89,8 +89,8 @@ const SESSION_KEY='vs_user';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
 async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
-async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});return r.json();}
-async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
 
 let SESSION=null;
 let myProfile=null;
@@ -148,13 +148,21 @@ function updateStatusUI(){
 async function toggleFree(){
   const st=myStatus?myStatus.status:'free';
   if(st==='free'){toast('You\'re already free!');return;}
-  if(myStatus){
-    await sbPatch('bm_status',myStatus.id,{status:'free',active_client_count:0});
-  }else{
-    await sbPost('bm_status',{bm_id:myProfile.id,store_id:SESSION.store_id,status:'free',active_client_count:0});
+  const btn=document.getElementById('freeBtn');
+  btn.disabled=true;
+  try{
+    if(myStatus){
+      await sbPatch('bm_status',myStatus.id,{status:'free',active_client_count:0,updated_at:new Date().toISOString()});
+    }else{
+      await sbPost('bm_status',{bm_id:myProfile.id,store_id:SESSION.store_id,status:'free',active_client_count:0});
+    }
+    toast('Marked as free');
+    loadData();
+  }catch(e){
+    toast('Failed to update status — try again',true);
+  }finally{
+    btn.disabled=false;
   }
-  toast('Marked as free');
-  loadData();
 }
 
 function renderClients(){
@@ -214,28 +222,36 @@ async function saveComments(visitId){
   const hs=document.getElementById('hs_'+visitId).value;
   const notes=document.getElementById('notes_'+visitId).value.trim();
   const fu=document.getElementById('fu_'+visitId).value;
-  await sbPatch('store_visits',visitId,{
-    house_stage:hs||null,
-    bm_comments:notes||null,
-    follow_up:fu||null,
-    visit_status:'completed'
-  });
-  if(myStatus&&myStatus.active_client_count>0){
-    const newCount=Math.max(0,myStatus.active_client_count-1);
-    await sbPatch('bm_status',myStatus.id,{
-      active_client_count:newCount,
-      status:newCount===0?'free':myStatus.status
+  const btn=document.querySelector('#body_'+visitId+' .save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    await sbPatch('store_visits',visitId,{
+      house_stage:hs||null,
+      bm_comments:notes||null,
+      follow_up:fu||null,
+      visit_status:'completed',
+      updated_at:new Date().toISOString()
     });
+    if(myStatus&&myStatus.active_client_count>0){
+      const newCount=Math.max(0,myStatus.active_client_count-1);
+      await sbPatch('bm_status',myStatus.id,{
+        active_client_count:newCount,
+        status:newCount===0?'free':myStatus.status,
+        updated_at:new Date().toISOString()
+      });
+    }
+    toast('Visit completed & saved');
+    expandedId=null;
+    loadData();
+  }catch(e){
+    toast('Failed to save — do not close this page, try again',true);
+    if(btn){btn.disabled=false;btn.textContent='Save & Mark Complete';}
   }
-  toast('Visit completed');
-  expandedId=null;
-  loadData();
 }
 
 SESSION=getSession();
 if(SESSION){
   document.getElementById('userPill').textContent=SESSION.name;
-  sbGet('profiles?id=eq.'+SESSION.name+'&select=id').catch(()=>{});
   sbGet('profiles?email=eq.'+encodeURIComponent(SESSION.email)+'&select=id,name,email').then(r=>{
     if(Array.isArray(r)&&r.length){
       myProfile=r[0];

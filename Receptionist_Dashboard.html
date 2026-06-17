@@ -128,8 +128,8 @@ const SESSION_KEY='vs_user';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
 async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
-async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});return r.json();}
-async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
 
 let SESSION=null;
 let visits=[];
@@ -200,9 +200,13 @@ function renderVisits(){
 }
 
 async function markArrived(id){
-  await sbPatch('store_visits',id,{visit_status:'arrived',arrival_time:new Date().toISOString()});
-  toast('Marked as arrived');
-  loadAll();
+  try{
+    await sbPatch('store_visits',id,{visit_status:'arrived',arrival_time:new Date().toISOString(),updated_at:new Date().toISOString()});
+    toast('Marked as arrived');
+    loadAll();
+  }catch(e){
+    toast('Failed to update — try again',true);
+  }
 }
 
 function openAssign(visitId,name){
@@ -225,17 +229,21 @@ function openAssign(visitId,name){
 }
 
 async function assignBM(bmId){
-  await sbPatch('store_visits',assigningVisitId,{visit_status:'bm_assigned',assigned_bm_id:bmId});
-  await sbPost('visit_assignments',{visit_id:assigningVisitId,bm_id:bmId,store_id:SESSION.store_id});
-  const existing=await sbGet('bm_status?bm_id=eq.'+bmId+'&select=id,active_client_count');
-  if(Array.isArray(existing)&&existing.length){
-    await sbPatch('bm_status',existing[0].id,{status:'engaged',active_client_count:(existing[0].active_client_count||0)+1,last_allocated_at:new Date().toISOString()});
-  }else{
-    await sbPost('bm_status',{bm_id:bmId,store_id:SESSION.store_id,status:'engaged',active_client_count:1,last_allocated_at:new Date().toISOString()});
+  try{
+    await sbPatch('store_visits',assigningVisitId,{visit_status:'bm_assigned',assigned_bm_id:bmId,updated_at:new Date().toISOString()});
+    await sbPost('visit_assignments',{visit_id:assigningVisitId,bm_id:bmId,store_id:SESSION.store_id});
+    const existing=await sbGet('bm_status?bm_id=eq.'+bmId+'&store_id=eq.'+SESSION.store_id+'&select=id,active_client_count');
+    if(Array.isArray(existing)&&existing.length){
+      await sbPatch('bm_status',existing[0].id,{status:'engaged',active_client_count:(existing[0].active_client_count||0)+1,last_allocated_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+    }else{
+      await sbPost('bm_status',{bm_id:bmId,store_id:SESSION.store_id,status:'engaged',active_client_count:1,last_allocated_at:new Date().toISOString()});
+    }
+    toast('BM assigned');
+    closeModal();
+    loadAll();
+  }catch(e){
+    toast('Failed to assign BM — try again',true);
   }
-  toast('BM assigned');
-  closeModal();
-  loadAll();
 }
 
 function renderBMPanel(){

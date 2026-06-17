@@ -117,9 +117,9 @@ const SESSION_KEY='vs_user';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
 async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
-async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});return r.json();}
-async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});return r.json();}
-async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});return r.ok;}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
+async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});if(!r.ok)throw new Error('Delete failed ('+r.status+')');return true;}
 
 let SESSION=null;
 let TAB='visits';
@@ -226,13 +226,22 @@ function selectAvail(s){
 
 async function saveAvail(){
   if(!selectedAvailStatus){toast('Select an availability option',true);return;}
-  await sbPatch('store_visits',editingVisitId,{
-    availability_status:selectedAvailStatus,
-    availability_notes:document.getElementById('availNotes').value.trim()||null
-  });
-  toast('Availability saved');
-  closeSheet();
-  loadVisits();
+  const btn=document.querySelector('.btn-full');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    await sbPatch('store_visits',editingVisitId,{
+      availability_status:selectedAvailStatus,
+      availability_notes:document.getElementById('availNotes').value.trim()||null,
+      updated_at:new Date().toISOString()
+    });
+    toast('Availability saved');
+    closeSheet();
+    loadVisits();
+  }catch(e){
+    toast('Failed to save — check connection and try again',true);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Save';}
+  }
 }
 
 async function loadTeam(){
@@ -276,18 +285,26 @@ async function addBM(){
   if(!name){err.textContent='Enter the BM\'s full name.';err.classList.add('show');return;}
   const existing=await sbGet('profiles?email=eq.'+encodeURIComponent(email)+'&select=id,role');
   if(Array.isArray(existing)&&existing.length){err.textContent='This email already has an account.';err.classList.add('show');return;}
-  await sbPost('profiles',{name,email,role:'store_bm',store_id:SESSION.store_id,passcode:null});
-  toast(name+' added as BM');
-  document.getElementById('bmEmail').value='';
-  document.getElementById('bmName').value='';
-  loadTeam();
+  try{
+    await sbPost('profiles',{name,email,role:'store_bm',store_id:SESSION.store_id,passcode:null});
+    toast(name+' added as BM');
+    document.getElementById('bmEmail').value='';
+    document.getElementById('bmName').value='';
+    loadTeam();
+  }catch(e){
+    err.textContent='Failed to add BM — check connection and try again.';err.classList.add('show');
+  }
 }
 
 async function removeBM(id,name){
   if(!confirm('Remove '+name+' from your team? Their account will be deleted.'))return;
-  await sbDel('profiles',id);
-  toast(name+' removed');
-  loadTeam();
+  try{
+    await sbDel('profiles',id);
+    toast(name+' removed');
+    loadTeam();
+  }catch(e){
+    toast('Failed to remove — try again',true);
+  }
 }
 
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
