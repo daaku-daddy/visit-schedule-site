@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Visit Schedule — Sign in</title>
+<style>
+  :root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:linear-gradient(160deg,#1F3A5F 0%,#16294a 60%,#0f1d36 100%);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .shell{width:100%;max-width:420px;}
+  .brand{text-align:center;margin-bottom:22px;color:#fff;}
+  .brand .logo{width:58px;height:58px;border-radius:15px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:24px;margin:0 auto 12px;box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  .brand .t{font-size:11px;letter-spacing:2px;color:#9fb2cd;font-weight:700;}
+  .brand .h{font-size:22px;font-weight:800;margin-top:2px;}
+  .card{background:#fff;border-radius:20px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .card h1{font-size:19px;margin:0 0 4px;color:var(--navy);}
+  .card .sub{font-size:13.5px;color:var(--muted);margin:0 0 20px;line-height:1.45;}
+  label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:0 0 7px;}
+  input[type=email]{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;font-size:16px;background:#fff;color:var(--ink);}
+  input:focus{outline:none;border-color:var(--blue);}
+  .pinwrap{display:flex;gap:10px;justify-content:center;}
+  .pinwrap input{text-align:center;font-size:28px;font-weight:800;padding:12px 0;width:68px;flex:0 0 auto;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);}
+  .pinwrap input:focus{outline:none;border-color:var(--blue);}
+  .btn{width:100%;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;margin-top:18px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .err{background:var(--redbg);color:var(--red);border-radius:10px;padding:11px 13px;font-size:13px;font-weight:600;margin-top:14px;display:none;}
+  .err.show{display:block;}
+  .roleline{display:flex;align-items:center;gap:10px;background:var(--greenbg);color:var(--green);border-radius:12px;padding:13px 15px;font-weight:700;font-size:14px;margin-top:16px;}
+  .roleline .ic{font-size:20px;}
+  .footnote{text-align:center;color:#8aa0bf;font-size:11.5px;margin-top:20px;}
+  .back{background:none;border:0;color:var(--blue);font-weight:700;font-size:13.5px;cursor:pointer;padding:0;margin-bottom:8px;}
+  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">
+    <div class="logo">VS</div>
+    <div class="t">MATERIAL DEPOT</div>
+    <div class="h">Visit Schedule</div>
+  </div>
+  <div class="card" id="card"></div>
+  <div class="footnote">Your access is set by an Admin. The dashboard you see depends on your role.</div>
+</div>
+
+<script>
+const SB_URL='https://dzilftvisjgckmefpzxk.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWxmdHZpc2pnY2ttZWZwenhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Njg0MTksImV4cCI6MjA5NzI0NDQxOX0.O-ZzJBs7TYEmXvVDf_7y70-skwSh7Ve4DuM-kBfXjP0';
+const SESSION_KEY='vs_user';
+
+const ROLE_FILES={
+  admin:         {label:'Admin',            file:'Admin.html',                  note:'Admin console'},
+  pre_sales:     {label:'Pre Sales',        file:'PreSales_Dashboard.html',     note:'Slot capacity view'},
+  store_manager: {label:'Store Manager',    file:'StoreManager_Dashboard.html', note:'Visit management'},
+  receptionist:  {label:'Receptionist',     file:'Receptionist_Dashboard.html', note:'Check-in & BM assignment'},
+  store_bm:      {label:'Business Manager', file:'BM_Dashboard.html',           note:'Assigned clients'},
+};
+
+const $=s=>document.querySelector(s);
+let state={email:'',user:null};
+
+async function patchProfile(id,body){
+  const r=await fetch(SB_URL+'/rest/v1/profiles?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(body)
+  });
+  return r.json();
+}
+
+const PIN4=()=>[0,1,2,3].map(()=>'<input type="text" inputmode="numeric" maxlength="1" autocomplete="off">').join('');
+
+function wirePinBoxes(boxes,onChange){
+  const sync=()=>onChange(boxes.map(b=>b.value).join(''));
+  boxes.forEach((b,i)=>{
+    b.oninput=()=>{b.value=b.value.replace(/\D/g,'').slice(0,1);if(b.value&&i<boxes.length-1)boxes[i+1].focus();sync();};
+    b.onkeydown=e=>{if(e.key==='Backspace'&&!b.value&&i>0)boxes[i-1].focus();};
+    b.onpaste=e=>{const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,4);if(t){e.preventDefault();t.split('').forEach((c,k)=>{if(boxes[k])boxes[k].value=c;});boxes[Math.min(t.length,boxes.length-1)].focus();sync();}};
+  });
+}
+
+function emailScreen(){
+  $('#card').innerHTML=`
+    <h1>Sign in</h1>
+    <p class="sub">Enter your Material Depot email to continue.</p>
+    <label>Work email</label>
+    <input id="email" type="email" inputmode="email" autocomplete="username" placeholder="name@materialdepot.com" value="${state.email}">
+    <div class="err" id="err"></div>
+    <button class="btn" id="send">Continue</button>`;
+  const ei=$('#email');
+  ei.oninput=e=>state.email=e.target.value.trim();
+  $('#send').onclick=trySend;
+  ei.onkeydown=e=>{if(e.key==='Enter')trySend();};
+  ei.focus();
+}
+
+async function trySend(){
+  const err=$('#err');err.classList.remove('show');
+  const email=(state.email||'').toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){err.textContent='Enter a valid email address.';err.classList.add('show');return;}
+  if(!email.endsWith('@materialdepot.com')){err.textContent='Please use your @materialdepot.com work email.';err.classList.add('show');return;}
+  const btn=$('#send');btn.disabled=true;btn.textContent='Checking…';
+  try{
+    const res=await fetch(SB_URL+'/rest/v1/profiles?email=eq.'+encodeURIComponent(email)+'&select=*',
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const rows=await res.json();
+    if(!Array.isArray(rows)||rows.length===0){
+      err.textContent='This email isn\'t approved for access yet. Ask an Admin to add you.';err.classList.add('show');
+      btn.disabled=false;btn.textContent='Continue';return;
+    }
+    state.user=rows[0];
+    if(state.user.passcode)enterPasscodeScreen();
+    else createPasscodeScreen();
+  }catch(e){
+    err.textContent='Network error — please try again.';err.classList.add('show');
+    btn.disabled=false;btn.textContent='Continue';
+  }
+}
+
+function createPasscodeScreen(){
+  $('#card').innerHTML=`
+    <button class="back" id="back">&#8592; Change email</button>
+    <h1>Create your passcode</h1>
+    <p class="sub">First time here — set a 4-digit passcode. You\'ll use it every time you sign in.</p>
+    <label>New passcode</label>
+    <div class="pinwrap" id="pw1">${PIN4()}</div>
+    <label style="margin-top:18px">Confirm passcode</label>
+    <div class="pinwrap" id="pw2">${PIN4()}</div>
+    <div class="err" id="err"></div>
+    <button class="btn" id="setpin" disabled>Set passcode &amp; sign in</button>`;
+  $('#back').onclick=emailScreen;
+  const b1=[...document.querySelectorAll('#pw1 input')];
+  const b2=[...document.querySelectorAll('#pw2 input')];
+  function checkReady(){$('#setpin').disabled=!(b1.every(b=>b.value)&&b2.every(b=>b.value));}
+  wirePinBoxes(b1,val=>{if(val.length===4)b2[0].focus();checkReady();});
+  wirePinBoxes(b2,()=>checkReady());
+  b1[0].focus();
+  $('#setpin').onclick=tryCreate;
+}
+
+async function tryCreate(){
+  const err=$('#err');err.classList.remove('show');
+  const p1=[...document.querySelectorAll('#pw1 input')].map(b=>b.value).join('');
+  const p2=[...document.querySelectorAll('#pw2 input')].map(b=>b.value).join('');
+  if(p1.length!==4){err.textContent='Enter a 4-digit passcode.';err.classList.add('show');return;}
+  if(p1!==p2){
+    err.textContent='Passcodes don\'t match — try again.';err.classList.add('show');
+    [...document.querySelectorAll('#pw2 input')].forEach(b=>b.value='');
+    document.querySelector('#pw2 input').focus();
+    $('#setpin').disabled=true;return;
+  }
+  const btn=$('#setpin');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
+  try{
+    await patchProfile(state.user.id,{passcode:p1});
+    state.user.passcode=p1;
+    successScreen();
+  }catch(e){
+    err.textContent='Network error — please try again.';err.classList.add('show');
+    btn.disabled=false;btn.innerHTML='Set passcode &amp; sign in';
+  }
+}
+
+function enterPasscodeScreen(){
+  $('#card').innerHTML=`
+    <button class="back" id="back">&#8592; Change email</button>
+    <h1>Enter your passcode</h1>
+    <p class="sub">Welcome back, <b>${state.user.name.split(' ')[0]}</b>. Enter your 4-digit passcode.</p>
+    <div class="pinwrap" id="pw">${PIN4()}</div>
+    <div class="err" id="err"></div>
+    <button class="btn" id="verify" disabled>Sign in</button>
+    <button class="back" id="chgpin" style="display:block;margin-top:14px;text-align:center;width:100%">Change passcode</button>`;
+  $('#back').onclick=emailScreen;
+  $('#chgpin').onclick=changePasscodeScreen;
+  const boxes=[...document.querySelectorAll('#pw input')];
+  wirePinBoxes(boxes,val=>{
+    $('#verify').disabled=val.length!==4;
+    if(val.length===4)tryEnter();
+  });
+  boxes[0].focus();
+  $('#verify').onclick=tryEnter;
+}
+
+function tryEnter(){
+  const err=$('#err');err.classList.remove('show');
+  const pin=[...document.querySelectorAll('#pw input')].map(b=>b.value).join('');
+  if(pin.length!==4)return;
+  if(pin!==state.user.passcode){
+    err.textContent='Incorrect passcode. Try again.';err.classList.add('show');
+    [...document.querySelectorAll('#pw input')].forEach(b=>b.value='');
+    document.querySelector('#pw input').focus();
+    $('#verify').disabled=true;return;
+  }
+  successScreen();
+}
+
+function changePasscodeScreen(){
+  $('#card').innerHTML=`
+    <button class="back" id="back">&#8592; Back</button>
+    <h1>Change passcode</h1>
+    <p class="sub">Enter your current passcode, then choose a new one.</p>
+    <label>Current passcode</label>
+    <div class="pinwrap" id="pwcur">${PIN4()}</div>
+    <label style="margin-top:18px">New passcode</label>
+    <div class="pinwrap" id="pwnew">${PIN4()}</div>
+    <label style="margin-top:18px">Confirm new passcode</label>
+    <div class="pinwrap" id="pwcon">${PIN4()}</div>
+    <div class="err" id="err"></div>
+    <button class="btn" id="savep" disabled>Update passcode &amp; sign in</button>`;
+  $('#back').onclick=enterPasscodeScreen;
+  const bCur=[...document.querySelectorAll('#pwcur input')];
+  const bNew=[...document.querySelectorAll('#pwnew input')];
+  const bCon=[...document.querySelectorAll('#pwcon input')];
+  function checkReady(){document.getElementById('savep').disabled=!(bCur.every(b=>b.value)&&bNew.every(b=>b.value)&&bCon.every(b=>b.value));}
+  wirePinBoxes(bCur,val=>{if(val.length===4)bNew[0].focus();checkReady();});
+  wirePinBoxes(bNew,val=>{if(val.length===4)bCon[0].focus();checkReady();});
+  wirePinBoxes(bCon,()=>checkReady());
+  bCur[0].focus();
+  document.getElementById('savep').onclick=tryChangePasscode;
+}
+
+async function tryChangePasscode(){
+  const err=$('#err');err.classList.remove('show');
+  const cur=[...document.querySelectorAll('#pwcur input')].map(b=>b.value).join('');
+  const p1=[...document.querySelectorAll('#pwnew input')].map(b=>b.value).join('');
+  const p2=[...document.querySelectorAll('#pwcon input')].map(b=>b.value).join('');
+  if(cur!==state.user.passcode){
+    err.textContent='Current passcode is incorrect.';err.classList.add('show');
+    [...document.querySelectorAll('#pwcur input')].forEach(b=>b.value='');
+    document.querySelector('#pwcur input').focus();
+    document.getElementById('savep').disabled=true;return;
+  }
+  if(p1===cur){err.textContent='New passcode must be different from your current one.';err.classList.add('show');return;}
+  if(p1!==p2){
+    err.textContent='New passcodes don\'t match — try again.';err.classList.add('show');
+    [...document.querySelectorAll('#pwnew input')].forEach(b=>b.value='');
+    [...document.querySelectorAll('#pwcon input')].forEach(b=>b.value='');
+    document.querySelector('#pwnew input').focus();
+    document.getElementById('savep').disabled=true;return;
+  }
+  const btn=document.getElementById('savep');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
+  try{
+    await patchProfile(state.user.id,{passcode:p1});
+    state.user.passcode=p1;
+    successScreen();
+  }catch(e){
+    err.textContent='Network error — please try again.';err.classList.add('show');
+    btn.disabled=false;btn.innerHTML='Update passcode &amp; sign in';
+  }
+}
+
+function successScreen(){
+  const r=ROLE_FILES[state.user.role];
+  localStorage.setItem(SESSION_KEY,JSON.stringify({
+    name:state.user.name,
+    email:state.user.email,
+    role:state.user.role,
+    store_id:state.user.store_id||null
+  }));
+  $('#card').innerHTML=`
+    <h1>Welcome, ${state.user.name.split(' ')[0]}</h1>
+    <p class="sub">You\'re signed in. Taking you to your dashboard…</p>
+    <div class="roleline"><span class="ic">&#10003;</span> Role: ${r.label} <span style="margin-left:auto;font-weight:600;color:var(--muted)">${r.note}</span></div>
+    <button class="btn" id="go"><span class="spin"></span> Opening…</button>`;
+  const go=()=>{window.location.href=r.file;};
+  setTimeout(go,900);
+  $('#go').onclick=go;
+}
+
+emailScreen();
+</script>
+</body>
+</html>

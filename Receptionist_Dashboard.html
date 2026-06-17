@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Visit Schedule — Receptionist</title>
+<style>
+  :root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+  header{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:14px;height:54px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .logo{width:30px;height:30px;border-radius:7px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:13px;flex:0 0 auto;}
+  .hdr-title{font-size:14px;font-weight:800;}
+  .hdr-sub{font-size:11px;color:#9fb2cd;}
+  .hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+  .store-badge{background:rgba(255,255,255,.12);border-radius:7px;padding:4px 10px;font-size:12px;color:#cdd8e8;font-weight:600;}
+  .signout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#cdd8e8;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:16px;min-height:calc(100vh - 54px);align-items:start;}
+  @media(max-width:768px){.layout{grid-template-columns:1fr;}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .panel-head h2{font-size:15px;font-weight:800;color:var(--navy);}
+  .panel-sub{font-size:12px;color:var(--muted);}
+
+  .visit-item{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px;}
+  .visit-item:last-child{border-bottom:0;}
+  .vi-time{font-size:13px;font-weight:800;color:var(--navy);background:#eef3fb;border-radius:7px;padding:4px 9px;white-space:nowrap;flex:0 0 auto;}
+  .vi-name{font-size:14px;font-weight:800;}
+  .vi-phone{font-size:12px;color:var(--muted);}
+  .vi-cats{font-size:12px;color:var(--muted);margin-top:2px;}
+  .vi-actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{display:inline-flex;align-items:center;font-size:11.5px;font-weight:800;border-radius:20px;padding:3px 10px;}
+  .c-scheduled{background:#eef1f6;color:var(--muted);}
+  .c-arrived{background:var(--greenbg);color:var(--green);}
+  .c-bm_assigned{background:#e4f0fb;color:var(--blue);}
+  .c-completed{background:var(--greenbg);color:var(--green);}
+
+  .btn-sm{border:0;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff;}
+  .btn-sm.outline{background:transparent;border:1px solid var(--line);color:var(--muted);}
+  .btn-sm:disabled{opacity:.45;cursor:not-allowed;}
+
+  .bm-item{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .bm-item:last-child{border-bottom:0;}
+  .bm-av{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;flex:0 0 auto;}
+  .bm-name{font-size:13.5px;font-weight:800;}
+  .bm-count{font-size:12px;color:var(--muted);}
+  .bm-status{margin-left:auto;}
+  .bm-chip{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;}
+  .bs-free{background:var(--greenbg);color:var(--green);}
+  .bs-engaged{background:var(--redbg);color:var(--red);}
+  .bs-potentially_available{background:var(--amberbg);color:var(--amber);}
+  .btn-assign{background:var(--blue);color:#fff;border:0;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;}
+
+  .empty{text-align:center;padding:40px 16px;color:var(--muted);}
+  .empty .e-ico{font-size:32px;margin-bottom:8px;}
+  .empty .e-msg{font-size:13.5px;font-weight:700;}
+  .loading{text-align:center;padding:40px;color:var(--muted);}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;}
+  .modal-head h3{font-size:15px;font-weight:800;color:var(--navy);}
+  .modal-close{margin-left:auto;background:transparent;border:0;font-size:20px;cursor:pointer;color:var(--muted);}
+  .modal-body{padding:16px 18px;}
+  .bm-pick-item{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;}
+  .bm-pick-item:hover{border-color:var(--blue);}
+  .bm-pick-item.busy{opacity:.6;cursor:not-allowed;}
+  .modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;}
+  .btn-cancel{background:#f0f2f5;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:200;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">VS</div>
+  <div><div class="hdr-title">Receptionist</div><div class="hdr-sub" id="userPill"></div></div>
+  <div class="hdr-right">
+    <span class="store-badge" id="storeBadge"></span>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Today's Visits</h2>
+      <span class="panel-sub" id="visitDate"></span>
+    </div>
+    <div id="visitsList"><div class="loading"><span class="spinner"></span></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <h2>BM Panel</h2>
+      <span class="panel-sub">Live status</span>
+    </div>
+    <div id="bmPanel"><div class="loading"><span class="spinner"></span></div></div>
+  </div>
+</div>
+
+<!-- Assign BM Modal -->
+<div class="overlay" id="assignOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Assign BM</h3>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px" id="assignVisitLabel"></p>
+      <div id="bmPickList"></div>
+    </div>
+    <div class="modal-foot"><button class="btn-cancel" onclick="closeModal()">Cancel</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SB_URL='https://dzilftvisjgckmefpzxk.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWxmdHZpc2pnY2ttZWZwenhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Njg0MTksImV4cCI6MjA5NzI0NDQxOX0.O-ZzJBs7TYEmXvVDf_7y70-skwSh7Ve4DuM-kBfXjP0';
+const SESSION_KEY='vs_user';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+
+async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+
+let SESSION=null;
+let visits=[];
+let bmStatuses=[];
+let bmProfiles=[];
+let assigningVisitId=null;
+let pollTm=null;
+
+function getSession(){
+  const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+  if(!s||s.role!=='receptionist'){window.location.href='Login.html';return null;}
+  return s;
+}
+function signOut(){localStorage.removeItem(SESSION_KEY);window.location.href='Login.html';}
+
+let toastTm=null;
+function toast(msg,err=false){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.background=err?'var(--red)':'var(--ink)';
+  t.classList.add('show');clearTimeout(toastTm);toastTm=setTimeout(()=>t.classList.remove('show'),2500);
+}
+function closeModal(){document.getElementById('assignOverlay').classList.remove('open');}
+
+function fmtTime(t){if(!t)return '';const[h,m]=t.split(':').map(Number);const ap=h>=12?'PM':'AM';return (h%12||12)+':'+(m<10?'0'+m:m)+' '+ap;}
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const AV_COLORS=['#5b3aa6','#2E6CA8','#1f7a3f','#9a6200','#1F3A5F'];
+function avColor(n){return AV_COLORS[(n||'?').charCodeAt(0)%AV_COLORS.length];}
+function initials(n){const p=(n||'?').trim().split(' ');return p.length>=2?p[0][0]+p[p.length-1][0]:p[0].slice(0,2).toUpperCase();}
+
+async function loadAll(){
+  const [v,bm,bmP]=await Promise.all([
+    sbGet('store_visits?store_id=eq.'+SESSION.store_id+'&visit_date=eq.'+today()+'&order=visit_time.asc&select=*'),
+    sbGet('bm_status?store_id=eq.'+SESSION.store_id+'&select=*'),
+    sbGet('profiles?store_id=eq.'+SESSION.store_id+'&role=eq.store_bm&select=id,name,email')
+  ]);
+  visits=Array.isArray(v)?v:[];
+  bmStatuses=Array.isArray(bm)?bm:[];
+  bmProfiles=Array.isArray(bmP)?bmP:[];
+  renderVisits();
+  renderBMPanel();
+}
+
+function renderVisits(){
+  document.getElementById('visitDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  if(!visits.length){
+    document.getElementById('visitsList').innerHTML='<div class="empty"><div class="e-ico">&#128197;</div><div class="e-msg">No visits scheduled today</div></div>';
+    return;
+  }
+  document.getElementById('visitsList').innerHTML=visits.map(v=>{
+    const statusLabel={scheduled:'Scheduled',arrived:'Arrived',bm_assigned:'BM Assigned',completed:'Completed'}[v.visit_status]||v.visit_status;
+    const bm=v.assigned_bm_id?bmProfiles.find(b=>b.id===v.assigned_bm_id):null;
+    return '<div class="visit-item">'+
+      '<div class="vi-time">'+fmtTime(v.visit_time)+'</div>'+
+      '<div style="flex:1">'+
+        '<div class="vi-name">'+esc(v.customer_name)+'</div>'+
+        '<div class="vi-phone">'+esc(v.phone||'')+'</div>'+
+        (Array.isArray(v.categories)&&v.categories.length?'<div class="vi-cats">'+esc(v.categories.join(', '))+'</div>':'')+
+        '<div class="vi-actions">'+
+          '<span class="chip c-'+v.visit_status+'">'+statusLabel+'</span>'+
+          (v.visit_status==='scheduled'?'<button class="btn-sm" onclick="markArrived(\''+v.id+'\')">Mark Arrived</button>':'')+
+          (v.visit_status==='arrived'?'<button class="btn-sm" onclick="openAssign(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Assign BM</button>':'')+
+          (bm?'<span style="font-size:12px;color:var(--muted)">BM: <b>'+esc(bm.name)+'</b></span>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function markArrived(id){
+  await sbPatch('store_visits',id,{visit_status:'arrived',arrival_time:new Date().toISOString()});
+  toast('Marked as arrived');
+  loadAll();
+}
+
+function openAssign(visitId,name){
+  assigningVisitId=visitId;
+  document.getElementById('assignVisitLabel').textContent='Assign a BM for: '+name;
+  const avail=bmProfiles.map(bm=>{
+    const st=bmStatuses.find(s=>s.bm_id===bm.id)||{status:'free',active_client_count:0};
+    const isBusy=st.status==='engaged';
+    const chipClass={'free':'bs-free','engaged':'bs-engaged','potentially_available':'bs-potentially_available'}[st.status]||'bs-free';
+    const chipLabel={'free':'Free','engaged':'Busy','potentially_available':'P. Available'}[st.status]||'Free';
+    return '<div class="bm-pick-item'+(isBusy?' busy':'')+'" onclick="'+(isBusy?'':'assignBM(\''+bm.id+'\')')+'">'+
+      '<div class="bm-av" style="background:'+avColor(bm.name)+'">'+initials(bm.name)+'</div>'+
+      '<div style="flex:1"><div style="font-size:13.5px;font-weight:700">'+esc(bm.name)+'</div>'+
+        '<div style="font-size:12px;color:var(--muted)">'+(st.active_client_count||0)+' active clients</div></div>'+
+      '<span class="bm-chip '+chipClass+'">'+chipLabel+'</span>'+
+    '</div>';
+  }).join('');
+  document.getElementById('bmPickList').innerHTML=avail||'<div class="empty"><div class="e-ico">&#128100;</div><div class="e-msg">No BMs available</div></div>';
+  document.getElementById('assignOverlay').classList.add('open');
+}
+
+async function assignBM(bmId){
+  await sbPatch('store_visits',assigningVisitId,{visit_status:'bm_assigned',assigned_bm_id:bmId});
+  await sbPost('visit_assignments',{visit_id:assigningVisitId,bm_id:bmId,store_id:SESSION.store_id});
+  const existing=await sbGet('bm_status?bm_id=eq.'+bmId+'&select=id,active_client_count');
+  if(Array.isArray(existing)&&existing.length){
+    await sbPatch('bm_status',existing[0].id,{status:'engaged',active_client_count:(existing[0].active_client_count||0)+1,last_allocated_at:new Date().toISOString()});
+  }else{
+    await sbPost('bm_status',{bm_id:bmId,store_id:SESSION.store_id,status:'engaged',active_client_count:1,last_allocated_at:new Date().toISOString()});
+  }
+  toast('BM assigned');
+  closeModal();
+  loadAll();
+}
+
+function renderBMPanel(){
+  if(!bmProfiles.length){
+    document.getElementById('bmPanel').innerHTML='<div class="empty"><div class="e-ico">&#128100;</div><div class="e-msg">No BMs in team</div></div>';
+    return;
+  }
+  document.getElementById('bmPanel').innerHTML=bmProfiles.map(bm=>{
+    const st=bmStatuses.find(s=>s.bm_id===bm.id)||{status:'free',active_client_count:0};
+    const chipClass={'free':'bs-free','engaged':'bs-engaged','potentially_available':'bs-potentially_available'}[st.status]||'bs-free';
+    const chipLabel={'free':'Free','engaged':'Engaged','potentially_available':'P. Available'}[st.status]||'Free';
+    return '<div class="bm-item">'+
+      '<div class="bm-av" style="background:'+avColor(bm.name)+'">'+initials(bm.name)+'</div>'+
+      '<div><div class="bm-name">'+esc(bm.name)+'</div><div class="bm-count">'+(st.active_client_count||0)+' clients</div></div>'+
+      '<div class="bm-status"><span class="bm-chip '+chipClass+'">'+chipLabel+'</span></div>'+
+    '</div>';
+  }).join('');
+}
+
+SESSION=getSession();
+if(SESSION){
+  document.getElementById('userPill').textContent=SESSION.name;
+  sbGet('stores?id=eq.'+SESSION.store_id+'&select=name').then(r=>{
+    if(Array.isArray(r)&&r.length)document.getElementById('storeBadge').textContent=r[0].name;
+  });
+  loadAll();
+  pollTm=setInterval(loadAll,10000);
+}
+</script>
+</body>
+</html>

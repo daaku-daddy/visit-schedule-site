@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Visit Schedule — Admin</title>
+<style>
+  :root{
+    --navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;
+    --ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;
+    --lighter:#eef3f9;--green:#1f7a3f;--greenbg:#e6f3ea;
+    --red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;
+    --purple:#5b3aa6;--purplebg:#efeaf8;
+    --shadow:0 1px 2px rgba(20,40,80,.06),0 4px 14px rgba(20,40,80,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;min-height:100vh;}
+
+  header{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:14px;height:56px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .logo{width:34px;height:34px;border-radius:8px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:15px;flex:0 0 auto;}
+  .brand-text .t{font-size:10px;color:#9fb2cd;letter-spacing:1px;font-weight:700;}
+  .brand-text .h{font-size:15px;font-weight:700;line-height:1.1;}
+  .admin-badge{background:var(--yellow);color:var(--navy);font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;}
+  .hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+  .user-pill{font-size:13px;color:#cdd8e8;}
+  .user-pill b{color:#fff;}
+  .signout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#cdd8e8;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+  .signout-btn:hover{background:rgba(255,255,255,.2);}
+
+  .layout{display:flex;min-height:calc(100vh - 56px);}
+  .rail{width:210px;background:#fff;border-right:1px solid var(--line);padding:12px 8px;flex:0 0 auto;display:flex;flex-direction:column;}
+  .rail-section{font-size:10px;letter-spacing:.8px;color:var(--muted);font-weight:800;margin:14px 10px 5px;text-transform:uppercase;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--ink);font-weight:600;font-size:13.5px;cursor:pointer;border:0;background:transparent;width:100%;text-align:left;}
+  .nav-item .ico{width:18px;text-align:center;flex:0 0 auto;}
+  .nav-item:hover{background:var(--lighter);}
+  .nav-item.active{background:var(--navy);color:#fff;}
+  .nav-badge{margin-left:auto;font-size:11px;background:var(--lighter);color:var(--navy);border-radius:20px;padding:1px 7px;font-weight:800;}
+  .nav-item.active .nav-badge{background:rgba(255,255,255,.18);color:#fff;}
+
+  main{flex:1;min-width:0;padding:22px 24px 60px;overflow:auto;}
+  .page-head{margin-bottom:20px;}
+  .page-head h1{font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px;}
+  .page-head p{color:var(--muted);font-size:13px;margin-top:3px;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
+  .stat-card .val{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-.5px;}
+  .stat-card .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;}
+  .card-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .card-head h2{font-size:15px;font-weight:800;color:var(--navy);}
+  .toolbar{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .search-wrap{position:relative;flex:1;min-width:180px;}
+  .search-wrap input{width:100%;padding:8px 10px 8px 30px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);}
+  .search-wrap input:focus{outline:none;border-color:var(--blue);}
+  .search-ico{position:absolute;left:9px;top:9px;color:var(--muted);font-size:13px;}
+
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:#f7f9fc;text-align:left;font-size:10.5px;letter-spacing:.5px;color:var(--muted);font-weight:800;padding:10px 14px;border-bottom:1px solid var(--line);text-transform:uppercase;white-space:nowrap;}
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:hover td{background:#fafbfd;}
+
+  .role-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;border-radius:20px;padding:4px 10px;white-space:nowrap;}
+  .rb-admin{background:var(--purplebg);color:var(--purple);}
+  .rb-pre_sales{background:#e3edf7;color:var(--navy);}
+  .rb-store_manager{background:#e4f0fb;color:var(--blue);}
+  .rb-receptionist{background:var(--greenbg);color:var(--green);}
+  .rb-store_bm{background:var(--amberbg);color:var(--amber);}
+
+  .user-av{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex:0 0 auto;}
+
+  .btn-icon{background:transparent;border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--muted);font-weight:700;}
+  .btn-icon:hover{border-color:var(--blue);color:var(--blue);}
+  .btn-icon.del:hover{border-color:var(--red);color:var(--red);}
+  .btn-primary{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .btn-primary:hover{background:var(--navy2);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;}
+  .modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;}
+  .modal-head h3{font-size:16px;font-weight:800;color:var(--navy);}
+  .modal-close{margin-left:auto;background:transparent;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px;}
+  .modal-body{padding:20px;}
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+  .form-group input,.form-group select{width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);background:#fff;}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);}
+  .form-error{background:var(--redbg);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:10px;display:none;}
+  .form-error.show{display:block;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;}
+  .btn-cancel{background:#f0f2f5;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);}
+
+  .role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
+  .role-card{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:border-color .15s;}
+  .role-card:hover{border-color:var(--blue);}
+  .role-card.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+  .role-card .rc-ico{font-size:26px;margin-bottom:6px;}
+  .role-card .rc-name{font-weight:800;font-size:13px;}
+  .role-card .rc-desc{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .role-card.active .rc-desc{color:#9fb2cd;}
+  .iframe-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;height:640px;}
+  .iframe-wrap iframe{width:100%;height:100%;border:0;}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty .e-ico{font-size:36px;margin-bottom:10px;}
+  .empty .e-msg{font-size:14px;font-weight:600;}
+  .loading-row{text-align:center;padding:40px;color:var(--muted);}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .confirm-modal{max-width:360px;}
+  .confirm-modal .modal-body p{color:var(--muted);font-size:13.5px;line-height:1.5;}
+  .btn-danger{background:var(--red);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+
+  .store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .store-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);}
+  .store-card .sc-name{font-size:15px;font-weight:800;color:var(--navy);}
+  .store-card .sc-loc{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .store-card .sc-meta{display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);}
+  .store-card .sc-stat{font-size:12px;color:var(--muted);}
+  .store-card .sc-stat b{color:var(--ink);font-size:14px;display:block;}
+  .store-card .sc-actions{margin-top:12px;display:flex;gap:8px;}
+</style>
+</head>
+<body>
+
+<div id="app" hidden>
+  <header>
+    <div class="logo">VS</div>
+    <div class="brand-text">
+      <div class="t">MATERIAL DEPOT</div>
+      <div class="h">Visit Schedule</div>
+    </div>
+    <span class="admin-badge">ADMIN</span>
+    <div class="hdr-right">
+      <span class="user-pill" id="userPill"></span>
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+  <div class="layout">
+    <nav class="rail">
+      <div class="rail-section">Dashboard</div>
+      <button class="nav-item active" data-view="overview" onclick="nav('overview')">
+        <span class="ico">&#9632;</span> Overview
+      </button>
+      <div class="rail-section">Management</div>
+      <button class="nav-item" data-view="users" onclick="nav('users')">
+        <span class="ico">&#128100;</span> Users
+        <span class="nav-badge" id="userCount">—</span>
+      </button>
+      <button class="nav-item" data-view="stores" onclick="nav('stores')">
+        <span class="ico">&#127978;</span> Stores
+        <span class="nav-badge" id="storeCount">—</span>
+      </button>
+      <div class="rail-section">Tools</div>
+      <button class="nav-item" data-view="roleviewer" onclick="nav('roleviewer')">
+        <span class="ico">&#128065;</span> Role Viewer
+      </button>
+    </nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- User Modal -->
+<div class="overlay" id="userOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="userModalTitle">Add User</h3>
+      <button class="modal-close" onclick="closeModal('userOverlay')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input id="uName" type="text" placeholder="e.g. Priya Sharma"/>
+      </div>
+      <div class="form-group">
+        <label>Work Email</label>
+        <input id="uEmail" type="email" placeholder="name@materialdepot.com"/>
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="uRole" onchange="onRoleChange()">
+          <option value="">Select role…</option>
+          <option value="admin">Admin</option>
+          <option value="pre_sales">Pre Sales</option>
+          <option value="store_manager">Store Manager</option>
+          <option value="receptionist">Receptionist</option>
+          <option value="store_bm">Business Manager (BM)</option>
+        </select>
+      </div>
+      <div class="form-group" id="storeField" style="display:none">
+        <label>Assigned Store</label>
+        <select id="uStore">
+          <option value="">Select store…</option>
+        </select>
+      </div>
+      <div class="form-error" id="uErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('userOverlay')">Cancel</button>
+      <button class="btn-primary" id="uSaveBtn" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Modal -->
+<div class="overlay" id="storeOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="storeModalTitle">Add Store</h3>
+      <button class="modal-close" onclick="closeModal('storeOverlay')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Store Name</label>
+        <input id="sName" type="text" placeholder="e.g. Banjara Hills"/>
+      </div>
+      <div class="form-group">
+        <label>Location / Address</label>
+        <input id="sLocation" type="text" placeholder="e.g. Road No. 12, Banjara Hills"/>
+      </div>
+      <div class="form-group">
+        <label>BM Target Count</label>
+        <input id="sBmCount" type="number" min="0" placeholder="0"/>
+      </div>
+      <div class="form-error" id="sErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('storeOverlay')">Cancel</button>
+      <button class="btn-primary" id="sSaveBtn" onclick="saveStore()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-modal">
+    <div class="modal-head">
+      <h3>Confirm Delete</h3>
+      <button class="modal-close" onclick="closeModal('confirmOverlay')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMsg"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('confirmOverlay')">Cancel</button>
+      <button class="btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://dzilftvisjgckmefpzxk.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWxmdHZpc2pnY2ttZWZwenhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Njg0MTksImV4cCI6MjA5NzI0NDQxOX0.O-ZzJBs7TYEmXvVDf_7y70-skwSh7Ve4DuM-kBfXjP0';
+const SESSION_KEY='vs_user';
+
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+
+async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
+async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});return r.json();}
+async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});return r.ok;}
+
+const ROLE_LABELS={admin:'Admin',pre_sales:'Pre Sales',store_manager:'Store Manager',receptionist:'Receptionist',store_bm:'BM'};
+const STORE_ROLES=['store_manager','receptionist','store_bm'];
+const AV_COLORS=['#5b3aa6','#1F3A5F','#2E6CA8','#1f7a3f','#9a6200'];
+const ROLE_KEYS=['admin','pre_sales','store_manager','receptionist','store_bm'];
+
+let SESSION=null;
+let VIEW='overview';
+let allUsers=[];
+let allStores=[];
+let editingUserId=null;
+let editingStoreId=null;
+
+function getSession(){
+  const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+  if(!s||s.role!=='admin'){window.location.href='Login.html';return null;}
+  return s;
+}
+
+function signOut(){
+  localStorage.removeItem(SESSION_KEY);
+  window.location.href='Login.html';
+}
+
+let toastTm=null;
+function toast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=isErr?'var(--red)':'var(--ink)';
+  t.classList.add('show');
+  clearTimeout(toastTm);
+  toastTm=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openModal(id){document.getElementById(id).classList.add('open');}
+
+function nav(v){
+  VIEW=v;
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('active',el.dataset.view===v);
+  });
+  const main=document.getElementById('main');
+  main.innerHTML='<div class="loading-row"><span class="spinner"></span></div>';
+  if(v==='overview')renderOverview();
+  else if(v==='users')renderUsers();
+  else if(v==='stores')renderStores();
+  else if(v==='roleviewer')renderRoleViewer();
+}
+
+function avColor(name){
+  const i=(name||'?').charCodeAt(0)%AV_COLORS.length;
+  return AV_COLORS[i];
+}
+function initials(name){
+  const p=(name||'?').trim().split(' ');
+  return p.length>=2?p[0][0]+p[p.length-1][0]:p[0].slice(0,2).toUpperCase();
+}
+
+/* ---------- OVERVIEW ---------- */
+async function renderOverview(){
+  const [users,stores,visits]=await Promise.all([
+    sbGet('profiles?select=id,role'),
+    sbGet('stores?select=id'),
+    sbGet('store_visits?visit_date=eq.'+today()+'&select=id,visit_status')
+  ]);
+  const uArr=Array.isArray(users)?users:[];
+  const sArr=Array.isArray(stores)?stores:[];
+  const vArr=Array.isArray(visits)?visits:[];
+  document.getElementById('userCount').textContent=uArr.length||'0';
+  document.getElementById('storeCount').textContent=sArr.length||'0';
+  const arrived=vArr.filter(v=>v.visit_status==='arrived'||v.visit_status==='bm_assigned'||v.visit_status==='completed').length;
+  document.getElementById('main').innerHTML=`
+    <div class="page-head"><h1>Overview</h1><p>Today: ${fmtDate(today())}</p></div>
+    <div class="stats">
+      <div class="stat-card"><div class="val">${uArr.length}</div><div class="lbl">Total Users</div></div>
+      <div class="stat-card"><div class="val">${sArr.length}</div><div class="lbl">Stores</div></div>
+      <div class="stat-card"><div class="val">${vArr.length}</div><div class="lbl">Visits Today</div></div>
+      <div class="stat-card"><div class="val">${arrived}</div><div class="lbl">Arrived Today</div></div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Role Breakdown</h2></div>
+      <div style="padding:16px;display:flex;flex-wrap:wrap;gap:10px;">
+        ${ROLE_KEYS.map(r=>{
+          const cnt=uArr.filter(u=>u.role===r).length;
+          return '<div style="background:var(--lighter);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700"><span class="role-badge rb-'+r+'" style="margin-right:8px">'+ROLE_LABELS[r]+'</span>'+cnt+'</div>';
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function today(){
+  return new Date().toISOString().slice(0,10);
+}
+function fmtDate(d){
+  if(!d)return '';
+  const dt=new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+/* ---------- USERS ---------- */
+async function renderUsers(){
+  const [users,stores]=await Promise.all([
+    sbGet('profiles?select=*&order=created_at.desc'),
+    sbGet('stores?select=id,name&order=name.asc')
+  ]);
+  allUsers=Array.isArray(users)?users:[];
+  allStores=Array.isArray(stores)?stores:[];
+  populateStoreSelect();
+  document.getElementById('main').innerHTML=`
+    <div class="page-head"><h1>Users</h1><p>Manage access and roles for all team members.</p></div>
+    <div class="card">
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-ico">&#128269;</span><input id="uSearch" placeholder="Search by name or email…" oninput="filterUsers(this.value)"/></div>
+        <button class="btn-primary" onclick="openAddUser()">+ Add User</button>
+      </div>
+      <div id="usersTable"><div class="loading-row"><span class="spinner"></span></div></div>
+    </div>`;
+  renderUsersTable(allUsers);
+}
+
+function populateStoreSelect(){
+  const sel=document.getElementById('uStore');
+  if(!sel)return;
+  sel.innerHTML='<option value="">Select store…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+}
+
+function renderUsersTable(users){
+  const el=document.getElementById('usersTable');
+  if(!el)return;
+  if(!users.length){el.innerHTML='<div class="empty"><div class="e-ico">&#128100;</div><div class="e-msg">No users yet</div></div>';return;}
+  el.innerHTML='<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Store</th><th>Actions</th></tr></thead><tbody>'+
+    users.map(u=>{
+      const store=allStores.find(s=>s.id===u.store_id);
+      return '<tr>'+
+        '<td><div style="display:flex;align-items:center;gap:10px"><div class="user-av" style="background:'+avColor(u.name)+'">'+initials(u.name)+'</div><div style="font-weight:700">'+esc(u.name)+'</div></div></td>'+
+        '<td style="color:var(--muted)">'+esc(u.email)+'</td>'+
+        '<td><span class="role-badge rb-'+u.role+'">'+ROLE_LABELS[u.role]+'</span></td>'+
+        '<td style="color:var(--muted)">'+esc(store?store.name:'—')+'</td>'+
+        '<td style="display:flex;gap:6px">'+
+          '<button class="btn-icon" onclick="openEditUser(\''+u.id+'\')">Edit</button>'+
+          '<button class="btn-icon" onclick="doResetPasscode(\''+u.id+'\',\''+esc(u.name)+'\')">Reset PIN</button>'+
+          '<button class="btn-icon del" onclick="doDeleteUser(\''+u.id+'\',\''+esc(u.name)+'\')">Delete</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('')+'</tbody></table>';
+}
+
+function filterUsers(q){
+  const lq=q.toLowerCase();
+  renderUsersTable(allUsers.filter(u=>(u.name||'').toLowerCase().includes(lq)||(u.email||'').toLowerCase().includes(lq)));
+}
+
+function esc(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function onRoleChange(){
+  const r=document.getElementById('uRole').value;
+  const show=STORE_ROLES.includes(r);
+  document.getElementById('storeField').style.display=show?'block':'none';
+}
+
+function openAddUser(){
+  editingUserId=null;
+  document.getElementById('userModalTitle').textContent='Add User';
+  document.getElementById('uName').value='';
+  document.getElementById('uEmail').value='';
+  document.getElementById('uRole').value='';
+  document.getElementById('uStore').value='';
+  document.getElementById('storeField').style.display='none';
+  document.getElementById('uErr').classList.remove('show');
+  document.getElementById('uSaveBtn').textContent='Add User';
+  populateStoreSelect();
+  openModal('userOverlay');
+}
+
+function openEditUser(id){
+  const u=allUsers.find(x=>x.id===id);
+  if(!u)return;
+  editingUserId=id;
+  document.getElementById('userModalTitle').textContent='Edit User';
+  document.getElementById('uName').value=u.name||'';
+  document.getElementById('uEmail').value=u.email||'';
+  document.getElementById('uRole').value=u.role||'';
+  document.getElementById('uErr').classList.remove('show');
+  document.getElementById('uSaveBtn').textContent='Save Changes';
+  populateStoreSelect();
+  const show=STORE_ROLES.includes(u.role);
+  document.getElementById('storeField').style.display=show?'block':'none';
+  document.getElementById('uStore').value=u.store_id||'';
+  openModal('userOverlay');
+}
+
+async function saveUser(){
+  const err=document.getElementById('uErr');
+  err.classList.remove('show');
+  const name=document.getElementById('uName').value.trim();
+  const email=document.getElementById('uEmail').value.trim().toLowerCase();
+  const role=document.getElementById('uRole').value;
+  const store_id=document.getElementById('uStore').value||null;
+
+  if(!name){err.textContent='Name is required.';err.classList.add('show');return;}
+  if(!email||!email.endsWith('@materialdepot.com')){err.textContent='Enter a valid @materialdepot.com email.';err.classList.add('show');return;}
+  if(!role){err.textContent='Select a role.';err.classList.add('show');return;}
+  if(STORE_ROLES.includes(role)&&!store_id){err.textContent='Select a store for this role.';err.classList.add('show');return;}
+
+  const btn=document.getElementById('uSaveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    if(editingUserId){
+      await sbPatch('profiles',editingUserId,{
+        name,email,role,
+        store_id:STORE_ROLES.includes(role)?store_id:null
+      });
+      toast('User updated');
+    }else{
+      await sbPost('profiles',{
+        name,email,role,
+        store_id:STORE_ROLES.includes(role)?store_id:null,
+        passcode:null
+      });
+      toast('User added');
+    }
+    closeModal('userOverlay');
+    await renderUsers();
+  }catch(e){
+    err.textContent='Error saving — please try again.';err.classList.add('show');
+  }finally{
+    btn.disabled=false;btn.textContent=editingUserId?'Save Changes':'Add User';
+  }
+}
+
+function doResetPasscode(id,name){
+  document.getElementById('confirmMsg').textContent='Reset the PIN for '+name+'? They will set a new passcode on next login.';
+  document.getElementById('confirmOk').onclick=async()=>{
+    await sbPatch('profiles',id,{passcode:null});
+    closeModal('confirmOverlay');
+    toast('Passcode reset for '+name);
+  };
+  openModal('confirmOverlay');
+}
+
+function doDeleteUser(id,name){
+  document.getElementById('confirmMsg').textContent='Delete user '+name+'? This cannot be undone.';
+  document.getElementById('confirmOk').onclick=async()=>{
+    await sbDel('profiles',id);
+    closeModal('confirmOverlay');
+    toast('Deleted '+name);
+    await renderUsers();
+  };
+  openModal('confirmOverlay');
+}
+
+/* ---------- STORES ---------- */
+async function renderStores(){
+  const stores=await sbGet('stores?select=*&order=name.asc');
+  allStores=Array.isArray(stores)?stores:[];
+  document.getElementById('storeCount').textContent=allStores.length||'0';
+  document.getElementById('main').innerHTML=`
+    <div class="page-head" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div><h1>Stores</h1><p>Manage store locations and BM targets.</p></div>
+      <button class="btn-primary" onclick="openAddStore()">+ Add Store</button>
+    </div>
+    <div id="storeGrid" class="store-grid">${renderStoreCards(allStores)}</div>`;
+}
+
+function renderStoreCards(stores){
+  if(!stores.length)return '<div class="empty"><div class="e-ico">&#127978;</div><div class="e-msg">No stores yet. Add your first store.</div></div>';
+  return stores.map(s=>`
+    <div class="store-card">
+      <div class="sc-name">${esc(s.name)}</div>
+      <div class="sc-loc">${esc(s.location||'No location set')}</div>
+      <div class="sc-meta">
+        <div class="sc-stat"><b>${s.bm_count||0}</b>BM Target</div>
+      </div>
+      <div class="sc-actions">
+        <button class="btn-icon" onclick="openEditStore('${s.id}')">Edit</button>
+      </div>
+    </div>`).join('');
+}
+
+function openAddStore(){
+  editingStoreId=null;
+  document.getElementById('storeModalTitle').textContent='Add Store';
+  document.getElementById('sName').value='';
+  document.getElementById('sLocation').value='';
+  document.getElementById('sBmCount').value='';
+  document.getElementById('sErr').classList.remove('show');
+  document.getElementById('sSaveBtn').textContent='Add Store';
+  openModal('storeOverlay');
+}
+
+function openEditStore(id){
+  const s=allStores.find(x=>x.id===id);
+  if(!s)return;
+  editingStoreId=id;
+  document.getElementById('storeModalTitle').textContent='Edit Store';
+  document.getElementById('sName').value=s.name||'';
+  document.getElementById('sLocation').value=s.location||'';
+  document.getElementById('sBmCount').value=s.bm_count||0;
+  document.getElementById('sErr').classList.remove('show');
+  document.getElementById('sSaveBtn').textContent='Save Changes';
+  openModal('storeOverlay');
+}
+
+async function saveStore(){
+  const err=document.getElementById('sErr');
+  err.classList.remove('show');
+  const name=document.getElementById('sName').value.trim();
+  const location=document.getElementById('sLocation').value.trim();
+  const bm_count=parseInt(document.getElementById('sBmCount').value)||0;
+
+  if(!name){err.textContent='Store name is required.';err.classList.add('show');return;}
+  const btn=document.getElementById('sSaveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    if(editingStoreId){
+      await sbPatch('stores',editingStoreId,{name,location,bm_count});
+      toast('Store updated');
+    }else{
+      await sbPost('stores',{name,location,bm_count,footfall_data:{}});
+      toast('Store added');
+    }
+    closeModal('storeOverlay');
+    await renderStores();
+  }catch(e){
+    err.textContent='Error saving — please try again.';err.classList.add('show');
+  }finally{
+    btn.disabled=false;btn.textContent=editingStoreId?'Save Changes':'Add Store';
+  }
+}
+
+/* ---------- ROLE VIEWER ---------- */
+const VIEWER_ROLES=[
+  {key:'pre_sales',label:'Pre Sales',ico:'&#128202;',desc:'Cross-store slot view'},
+  {key:'store_manager',label:'Store Manager',ico:'&#128203;',desc:'Visit management'},
+  {key:'receptionist',label:'Receptionist',ico:'&#127979;',desc:'Check-in & BM panel'},
+  {key:'store_bm',label:'BM',ico:'&#129309;',desc:'Assigned clients'},
+];
+const ROLE_FILES_MAP={
+  pre_sales:'PreSales_Dashboard.html',
+  store_manager:'StoreManager_Dashboard.html',
+  receptionist:'Receptionist_Dashboard.html',
+  store_bm:'BM_Dashboard.html',
+};
+let viewerRole=null;
+let viewerStoreId=null;
+
+function renderRoleViewer(){
+  document.getElementById('main').innerHTML=`
+    <div class="page-head"><h1>Role Viewer</h1><p>Preview any dashboard as it appears to that role.</p></div>
+    <div class="role-cards">
+      ${VIEWER_ROLES.map(r=>`<div class="role-card" data-rk="${r.key}" onclick="selectViewerRole('${r.key}')">
+        <div class="rc-ico">${r.ico}</div><div class="rc-name">${r.label}</div><div class="rc-desc">${r.desc}</div>
+      </div>`).join('')}
+    </div>
+    <div id="viewerStoreWrap" style="display:none;margin-bottom:16px">
+      <label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block">Select Store</label>
+      <select id="viewerStore" style="padding:10px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;width:280px" onchange="viewerStoreId=this.value">
+        <option value="">Select a store…</option>
+        ${allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')}
+      </select>
+    </div>
+    <div id="viewerLaunchWrap" style="display:none;margin-bottom:16px">
+      <button class="btn-primary" onclick="launchViewer()">&#128065; Open Preview</button>
+    </div>
+    <div id="viewerFrame" style="display:none">
+      <div class="iframe-wrap"><iframe id="rvIframe"></iframe></div>
+    </div>`;
+  if(!allStores.length){
+    sbGet('stores?select=id,name&order=name.asc').then(s=>{
+      allStores=Array.isArray(s)?s:[];
+    });
+  }
+}
+
+function selectViewerRole(rk){
+  viewerRole=rk;
+  viewerStoreId=null;
+  document.querySelectorAll('.role-card').forEach(el=>el.classList.toggle('active',el.dataset.rk===rk));
+  const needsStore=STORE_ROLES.includes(rk);
+  document.getElementById('viewerStoreWrap').style.display=needsStore?'block':'none';
+  document.getElementById('viewerLaunchWrap').style.display=needsStore?'none':'block';
+  if(needsStore){
+    document.getElementById('viewerStore').value='';
+    document.getElementById('viewerStore').onchange=function(){
+      viewerStoreId=this.value;
+      document.getElementById('viewerLaunchWrap').style.display=viewerStoreId?'block':'none';
+    };
+  }
+  document.getElementById('viewerFrame').style.display='none';
+}
+
+function launchViewer(){
+  if(!viewerRole)return;
+  if(STORE_ROLES.includes(viewerRole)&&!viewerStoreId){toast('Select a store first',true);return;}
+  const adminSession=localStorage.getItem(SESSION_KEY);
+  const fakeSession=JSON.stringify({
+    name:'Admin (Preview)',
+    email:'admin@preview.local',
+    role:viewerRole,
+    store_id:viewerStoreId||null
+  });
+  localStorage.setItem(SESSION_KEY,fakeSession);
+  const iframe=document.getElementById('rvIframe');
+  iframe.onload=()=>{localStorage.setItem(SESSION_KEY,adminSession);};
+  iframe.src=ROLE_FILES_MAP[viewerRole]+'?preview=1&t='+Date.now();
+  document.getElementById('viewerFrame').style.display='block';
+}
+
+/* ---------- INIT ---------- */
+SESSION=getSession();
+if(SESSION){
+  document.getElementById('app').hidden=false;
+  document.getElementById('userPill').innerHTML='Signed in as <b>'+SESSION.name+'</b>';
+  Promise.all([
+    sbGet('profiles?select=id'),
+    sbGet('stores?select=id,name&order=name.asc')
+  ]).then(([u,s])=>{
+    document.getElementById('userCount').textContent=Array.isArray(u)?u.length:'?';
+    allStores=Array.isArray(s)?s:[];
+    document.getElementById('storeCount').textContent=allStores.length;
+  });
+  nav('overview');
+}
+</script>
+</body>
+</html>
