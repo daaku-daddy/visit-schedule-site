@@ -127,6 +127,10 @@
   .store-card .sc-stat{font-size:12px;color:var(--muted);}
   .store-card .sc-stat b{color:var(--ink);font-size:14px;display:block;}
   .store-card .sc-actions{margin-top:12px;display:flex;gap:8px;}
+
+  .ff-tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-bottom:14px;}
+  .ff-tab{flex:1;padding:9px 12px;font-size:12.5px;font-weight:700;border:0;background:#f7f9fc;color:var(--muted);cursor:pointer;transition:all .12s;}
+  .ff-tab.active{background:var(--navy);color:#fff;}
 </style>
 </head>
 <body>
@@ -249,8 +253,13 @@
       <button class="modal-close" onclick="closeModal('footfallOverlay')">&#10005;</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Enter expected walk-in footfall per hour slot. Used by Pre Sales to calculate slot load alongside scheduled visits.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ffGrid"></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Expected walk-in footfall per hour. Used by Pre Sales to calculate slot load alongside scheduled visits.</p>
+      <div class="ff-tabs">
+        <button class="ff-tab active" onclick="switchFfTab('weekday',this)">Weekday (Mon–Fri)</button>
+        <button class="ff-tab" onclick="switchFfTab('weekend',this)">Weekend (Sat–Sun)</button>
+      </div>
+      <div id="ffGridWeekday" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      <div id="ffGridWeekend" style="display:none;grid-template-columns:1fr 1fr;gap:10px"></div>
       <div class="form-error" id="ffErr"></div>
     </div>
     <div class="modal-foot">
@@ -558,13 +567,15 @@ function renderStoreCards(stores){
   if(!stores.length)return '<div class="empty"><div class="e-ico">&#127978;</div><div class="e-msg">No stores yet. Add your first store.</div></div>';
   return stores.map(s=>{
     const ff=s.footfall_data||{};
-    const ffTotal=Object.values(ff).reduce((a,b)=>a+(Number(b)||0),0);
+    const ffFlat=ff.weekday||ff;
+    const ffTotal=Object.values(ffFlat).reduce((a,b)=>a+(Number(b)||0),0);
+    const hasWeekend=!!(ff.weekday&&ff.weekend);
     return `<div class="store-card">
       <div class="sc-name">${esc(s.name)}</div>
       <div class="sc-loc">${esc(s.location||'No location set')}</div>
       <div class="sc-meta">
         <div class="sc-stat"><b>${s.bm_count||0}</b>BM Target</div>
-        <div class="sc-stat"><b>${ffTotal||'—'}</b>Daily Footfall</div>
+        <div class="sc-stat"><b>${ffTotal||'—'}</b>${hasWeekend?'Weekday Footfall':'Daily Footfall'}</div>
       </div>
       <div class="sc-actions">
         <button class="btn-icon" onclick="openEditStore('${s.id}')">Edit</button>
@@ -634,19 +645,36 @@ const FF_SLOTS=[
 ];
 let editingFootfallStoreId=null;
 
+function buildFfGrid(gridId,prefix,data){
+  document.getElementById(gridId).innerHTML=FF_SLOTS.map(sl=>
+    '<div style="display:flex;align-items:center;gap:8px;background:#f7f9fc;border-radius:8px;padding:8px 10px">'+
+      '<span style="font-size:12.5px;font-weight:700;color:var(--muted);min-width:38px">'+sl.label+'</span>'+
+      '<input id="'+prefix+sl.hour+'" type="number" min="0" value="'+(data[sl.hour]||data[String(sl.hour)]||0)+'" style="width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;font-size:13px;text-align:center"/>'+
+      '<span style="font-size:11.5px;color:var(--muted)">walk-ins</span>'+
+    '</div>'
+  ).join('');
+}
+
+function switchFfTab(tab,btn){
+  document.querySelectorAll('.ff-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ffGridWeekday').style.display=tab==='weekday'?'grid':'none';
+  document.getElementById('ffGridWeekend').style.display=tab==='weekend'?'grid':'none';
+}
+
 function openFootfall(id){
   const s=allStores.find(x=>x.id===id);
   if(!s)return;
   editingFootfallStoreId=id;
   document.getElementById('ffModalTitle').textContent='Set Footfall — '+s.name;
   const ff=s.footfall_data||{};
-  document.getElementById('ffGrid').innerHTML=FF_SLOTS.map(sl=>
-    '<div style="display:flex;align-items:center;gap:8px;background:#f7f9fc;border-radius:8px;padding:8px 10px">'+
-      '<span style="font-size:12.5px;font-weight:700;color:var(--muted);min-width:38px">'+sl.label+'</span>'+
-      '<input id="ff_'+sl.hour+'" type="number" min="0" value="'+(ff[sl.hour]||ff[String(sl.hour)]||0)+'" style="width:60px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;font-size:13px;text-align:center"/>'+
-      '<span style="font-size:11.5px;color:var(--muted)">walk-ins</span>'+
-    '</div>'
-  ).join('');
+  const wdData=ff.weekday||ff;
+  const weData=ff.weekend||{};
+  buildFfGrid('ffGridWeekday','ff_wd_',wdData);
+  buildFfGrid('ffGridWeekend','ff_we_',weData);
+  document.querySelectorAll('.ff-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('ffGridWeekday').style.display='grid';
+  document.getElementById('ffGridWeekend').style.display='none';
   document.getElementById('ffErr').classList.remove('show');
   document.getElementById('ffSaveBtn').disabled=false;
   document.getElementById('ffSaveBtn').textContent='Save Footfall';
@@ -654,11 +682,12 @@ function openFootfall(id){
 }
 
 async function saveFootfall(){
-  const footfall_data={};
+  const weekday={},weekend={};
   FF_SLOTS.forEach(sl=>{
-    const v=parseInt(document.getElementById('ff_'+sl.hour).value)||0;
-    footfall_data[sl.hour]=v;
+    weekday[sl.hour]=parseInt(document.getElementById('ff_wd_'+sl.hour).value)||0;
+    weekend[sl.hour]=parseInt(document.getElementById('ff_we_'+sl.hour).value)||0;
   });
+  const footfall_data={weekday,weekend};
   const btn=document.getElementById('ffSaveBtn');
   btn.disabled=true;btn.textContent='Saving…';
   try{
