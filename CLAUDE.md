@@ -23,6 +23,7 @@ Store visit scheduling and management system for Material Depot. Separate repo, 
 | `Receptionist_Dashboard.html` | Today's check-ins + live BM panel | Desktop/Tablet |
 | `BM_Dashboard.html` | Assigned clients + comment/house stage form | Mobile |
 | `schema.sql` | Full Supabase schema (run once in SQL editor) | — |
+| `footfall_migration.sql` | Seeds weekday/weekend footfall for JP Nagar, Whitefield, Yelahanka from Excel analysis | — |
 | `vercel.json` | `no-cache` headers on all HTML files | — |
 
 ## Roles
@@ -53,8 +54,10 @@ Store visit scheduling and management system for Material Depot. Separate repo, 
 ### `stores`
 `id, name, location, bm_count, footfall_data (jsonb), created_at`
 - `bm_count`: target number of BMs, used in slot capacity formula
-- `footfall_data`: `{9: 2, 10: 5, 11: 8, ...}` — expected walk-in footfall per hour (key = hour 9–19)
-- Set via Admin → Stores → "Set Footfall" button (per-store modal with 11 hour inputs)
+- `footfall_data`: `{weekday: {9:0,10:1,...}, weekend: {9:0,10:1,...}}` — expected walk-in footfall per hour (key = hour 9–19), split by weekday/weekend
+- Backward-compatible: if old flat `{9:2,...}` format exists, code falls back gracefully
+- Set via Admin → Stores → "Set Footfall" button — modal has Weekday (Mon–Fri) and Weekend (Sat–Sun) tabs, each with 11 hour inputs
+- Seeded for JP Nagar, Whitefield, Yelahanka via `footfall_migration.sql` (median values from Hourly_Footfall_Corrected_Analysis.xlsx)
 
 ### `profiles`
 `id, name, email, role, passcode, store_id, created_at`
@@ -115,6 +118,7 @@ Rail nav views:
 - "+ Schedule Visit" button in controls bar
 - **Left panel** — Slot Capacity Grid (9 AM–7 PM):
   - Load formula: `(scheduled_visits_for_slot + footfall[hour]) / bm_count`
+  - Footfall set chosen by `isWeekend(selectedDay)` — weekday vs weekend
   - Green < 50%, Orange 50–80%, Red ≥ 80%
   - Each row is clickable → opens scheduling form pre-filled with that time
   - "+ Schedule" hint appears on row hover
@@ -123,7 +127,8 @@ Rail nav views:
   - "Cancel visit" button on `scheduled` visits only (deletes the row)
 - **Schedule Visit modal**:
   - Customer name, phone (10-digit validated), store, date, time slot
-  - Category multi-select chips: Flooring, Wallpaper, Modular Wardrobes, False Ceiling, Painting, Furniture, Others
+  - **Standard category chips** (toggle): Tiles, Laminates, Plywood, Panels, Wooden Flooring, Wallpapers, Quartz, HDHMR, Blockboard, Adhesives, Wall Cladding
+  - **Other Categories** section below divider: free-text input + Add button (or Enter key); each custom entry shows as a removable chip; `selectedCats` + `otherCats` merged on save
   - Pre-sales notes (optional textarea)
   - Saves to `store_visits` with `visit_status='scheduled'`
   - Error handling: button disabled during save, error shown inline if fails
@@ -168,14 +173,16 @@ Split layout (always visible side by side):
 
 ## Slot Capacity Formula
 ```
-load = (scheduled_visits_for_slot + stores.footfall_data[hour]) / stores.bm_count
+load = (scheduled_visits_for_slot + footfall[hour]) / stores.bm_count
 Green:  load < 0.50
 Orange: load 0.50–0.79
 Red:    load >= 0.80
 ```
 - `scheduled_visits_for_slot`: count of `store_visits` where `visit_date=selectedDay`, `visit_time` starts with that hour, `visit_status != completed`
-- `footfall_data` key is the hour as integer (9, 10, … 19) or string — both are checked
-- Set by Admin in Stores → "Set Footfall" modal
+- `footfall` set chosen by day-of-week: `isWeekend(selectedDay)` (getDay()==0||6) → `footfall_data.weekend` else `footfall_data.weekday`
+- Falls back to flat `footfall_data` if no `weekday` key (backward compat)
+- Key is the hour as integer (9, 10, … 19) or string — both are checked
+- Set by Admin in Stores → "Set Footfall" modal (Weekday + Weekend tabs)
 
 ## CSS Design System
 Same variables as existing material-depot-site:
@@ -222,12 +229,14 @@ Auto-deploys are linked: every push to master also triggers Vercel via GitHub in
 2. **visit_time is text "HH:MM"** — stored as "09:00", "10:00", etc. Parse with `parseInt(v.visit_time.split(':')[0])` to match to a slot hour.
 3. **BM profile lookup uses email** — `profiles?email=eq.${SESSION.email}` (not by id — id isn't stored in session)
 4. **bm_status is one row per BM** — Receptionist checks for existing row then patches or posts. Filter by `bm_id` and `store_id` to avoid cross-store collision.
-5. **footfall_data keys** — stored as integer keys in jsonb (`{9: 2, 10: 5}`). Read with `ff[slot.hour] || ff[String(slot.hour)]` to handle both integer and string key formats.
-6. **Cancel visit (Pre Sales)** — only shown for `visit_status='scheduled'` visits. Uses `sbDel('store_visits', id)` — hard delete.
-7. **Category multi-select** — `selectedCats` array maintained in JS state. `buildCatGrid()` re-renders buttons with `.active` class. Saved as jsonb array to `categories`.
-8. **Admin role viewer store picker** — shown only for `store_manager`, `receptionist`, `store_bm`. Pre-loads `allStores` from init fetch.
-9. **Day nav** — `Array.from({length:7}, (_,i) => dateStr(i))` generates today + 6 forward. `dateStr(0)` = today in local timezone.
-10. **vercel.json** — `Cache-Control: no-cache` on all `*.html` to prevent stale JS on mobile browsers.
+5. **footfall_data format** — `{weekday:{9:0,...,19:4}, weekend:{9:0,...,19:7}}`. Read with `ff.weekday||ff` to fall back to old flat format. Keys can be int or string — check both.
+6. **isWeekend(dateStr)** — `new Date(d+'T00:00:00').getDay()===0||===6`. Used in PreSales to pick weekday vs weekend footfall set.
+7. **Cancel visit (Pre Sales)** — only shown for `visit_status='scheduled'` visits. Uses `sbDel('store_visits', id)` — hard delete.
+8. **Category multi-select (Pre Sales)** — two arrays: `selectedCats` (standard chips) + `otherCats` (free-text custom entries). `buildCatGrid()` renders both. On save: `[...selectedCats,...otherCats]` saved to `categories` jsonb.
+9. **Admin Set Footfall modal** — Weekday/Weekend tabs via `switchFfTab()`. Input IDs: `ff_wd_9…ff_wd_19` (weekday), `ff_we_9…ff_we_19` (weekend). `buildFfGrid(gridId, prefix, data)` populates each tab. On open: `ff.weekday||ff` for weekday tab, `ff.weekend||{}` for weekend tab.
+10. **Admin role viewer store picker** — shown only for `store_manager`, `receptionist`, `store_bm`. Pre-loads `allStores` from init fetch.
+11. **Day nav** — `Array.from({length:7}, (_,i) => dateStr(i))` generates today + 6 forward. `dateStr(0)` = today in local timezone.
+12. **vercel.json** — `Cache-Control: no-cache` on all `*.html` to prevent stale JS on mobile browsers.
 
 ## Pending / Still to Build
 - **Kylas CRM sync**: Vercel cron job (~2 min) polling Kylas REST API → upsert into `store_visits` on `kylas_id`. Requires Kylas API key + field mapping from user.
