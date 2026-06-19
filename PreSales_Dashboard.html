@@ -221,7 +221,7 @@ async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H})
 async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
 async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});if(!r.ok)throw new Error('Delete failed ('+r.status+')');return true;}
 
-const CATEGORIES=['Flooring','Wallpaper','Modular Wardrobes','False Ceiling','Painting','Furniture','Others'];
+const CATEGORIES=['Tiles','Laminates','Plywood','Panels','Wooden Flooring','Wallpapers','Quartz','HDHMR','Blockboard','Adhesives','Wall Cladding'];
 const SLOTS=[
   {hour:9,value:'09:00',label:'9 AM – 10 AM'},
   {hour:10,value:'10:00',label:'10 AM – 11 AM'},
@@ -243,6 +243,7 @@ let selectedStore=null;
 let selectedDay=dateStr(0);
 let dayVisits=[];
 let selectedCats=[];
+let otherCats=[];
 let pollTm=null;
 
 function getSession(){
@@ -421,6 +422,7 @@ function renderVisitsList(){
 function openSchedule(timeValue){
   if(!allStores.length){toast('No stores set up yet — add them in Admin',true);return;}
   selectedCats=[];
+  otherCats=[];
   document.getElementById('fName').value='';
   document.getElementById('fPhone').value='';
   document.getElementById('fDate').value=selectedDay;
@@ -437,14 +439,45 @@ function openSchedule(timeValue){
 }
 
 function buildCatGrid(){
-  document.getElementById('catGrid').innerHTML=CATEGORIES.map(c=>
+  const standardChips=CATEGORIES.map(c=>
     '<button type="button" class="cat-btn'+(selectedCats.includes(c)?' active':'')+'" onclick="toggleCat(\''+c+'\')">'+esc(c)+'</button>'
   ).join('');
+  const customChips=otherCats.map((c,i)=>
+    '<span class="cat-btn active" style="display:inline-flex;align-items:center;gap:5px">'+esc(c)+
+    '<button type="button" onclick="removeOtherCat('+i+')" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;padding:0;line-height:1;opacity:.75">&times;</button></span>'
+  ).join('');
+  document.getElementById('catGrid').innerHTML=
+    standardChips+
+    '<div style="width:100%;border-top:1px solid var(--line);margin:4px 0"></div>'+
+    '<div style="width:100%">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Other Categories</div>'+
+      (customChips?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+customChips+'</div>':'')+
+      '<div style="display:flex;gap:6px">'+
+        '<input id="otherCatInput" type="text" placeholder="e.g. Veneer" style="flex:1;padding:7px 10px;border:2px solid var(--line);border-radius:9px;font-size:13px;color:var(--ink);" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addOtherCat();}"/>'+
+        '<button type="button" onclick="addOtherCat()" style="padding:7px 13px;background:var(--navy);color:#fff;border:0;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;">Add</button>'+
+      '</div>'+
+    '</div>';
 }
 
 function toggleCat(c){
   if(selectedCats.includes(c))selectedCats=selectedCats.filter(x=>x!==c);
   else selectedCats.push(c);
+  buildCatGrid();
+}
+
+function addOtherCat(){
+  const inp=document.getElementById('otherCatInput');
+  if(!inp)return;
+  const val=inp.value.trim();
+  if(!val||otherCats.map(s=>s.toLowerCase()).includes(val.toLowerCase()))return;
+  otherCats.push(val);
+  inp.value='';
+  buildCatGrid();
+  setTimeout(()=>{const el=document.getElementById('otherCatInput');if(el)el.focus();},10);
+}
+
+function removeOtherCat(i){
+  otherCats.splice(i,1);
   buildCatGrid();
 }
 
@@ -472,7 +505,7 @@ async function doSchedule(){
       phone:phone.replace(/\s/g,''),
       visit_date:date,
       visit_time:time,
-      categories:selectedCats,
+      categories:[...selectedCats,...otherCats],
       presales_notes:notes||null,
       visit_status:'scheduled'
     });
