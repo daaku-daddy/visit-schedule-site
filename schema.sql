@@ -76,3 +76,11 @@ create policy "anon_all" on visit_assignments for all using (true) with check (t
 
 -- Seed: first admin (update email/name as needed before running)
 -- insert into profiles (name, email, role) values ('Admin', 'admin@materialdepot.com', 'admin');
+
+-- Public holidays: dates that use weekend footfall for slot capacity
+create table if not exists public_holidays (
+  id uuid default gen_random_uuid() primary key,
+  date text not null unique,  -- 'YYYY-MM-DD'
+  name text not null,
+  created_at timestamptz default now()
+);

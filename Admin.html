@@ -162,6 +162,9 @@
         <span class="ico">&#127978;</span> Stores
         <span class="nav-badge" id="storeCount">—</span>
       </button>
+      <button class="nav-item" data-view="holidays" onclick="nav('holidays')">
+        <span class="ico">&#127965;</span> Holidays
+      </button>
       <div class="rail-section">Tools</div>
       <button class="nav-item" data-view="roleviewer" onclick="nav('roleviewer')">
         <span class="ico">&#128065;</span> Role Viewer
@@ -342,6 +345,7 @@ function nav(v){
   if(v==='overview')renderOverview();
   else if(v==='users')renderUsers();
   else if(v==='stores')renderStores();
+  else if(v==='holidays')renderHolidays();
   else if(v==='roleviewer')renderRoleViewer();
 }
 
@@ -697,6 +701,80 @@ async function saveFootfall(){
     document.getElementById('ffErr').textContent='Error saving — please try again.';
     document.getElementById('ffErr').classList.add('show');
     btn.disabled=false;btn.textContent='Save Footfall';
+  }
+}
+
+/* ---------- PUBLIC HOLIDAYS ---------- */
+async function renderHolidays(){
+  const main=document.getElementById('main');
+  const rows=await sbGet('public_holidays?order=date.asc');
+  const holidays=Array.isArray(rows)?rows:[];
+  main.innerHTML=`
+    <div class="page-head">
+      <h1>Public Holidays</h1>
+      <p>On these dates, slot capacity uses weekend footfall instead of weekday footfall.</p>
+    </div>
+    <div class="card" style="max-width:560px">
+      <div class="card-head">
+        <h2>Add Holiday</h2>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Date</div>
+          <input id="hlDate" type="date" style="padding:8px 10px;border:2px solid var(--line);border-radius:9px;font-size:13.5px;color:var(--ink)"/>
+        </div>
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Holiday Name</div>
+          <input id="hlName" type="text" placeholder="e.g. Republic Day" style="width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:9px;font-size:13.5px;color:var(--ink)"/>
+        </div>
+        <button class="btn-primary" onclick="addHoliday()" style="height:38px">Add</button>
+      </div>
+      <div id="hlErr" style="display:none;margin:0 16px 10px;padding:8px 12px;background:var(--redbg);color:var(--red);border-radius:8px;font-size:12.5px;font-weight:600"></div>
+    </div>
+    <div class="card" style="max-width:560px;margin-top:14px">
+      <div class="card-head">
+        <h2>All Holidays</h2>
+      </div>
+      <div id="hlList">${holidays.length?holidays.map(h=>holidayRow(h)).join(''):'<div class="empty" style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:13px;font-weight:700">No holidays added yet.</div></div>'}</div>
+    </div>`;
+}
+
+function holidayRow(h){
+  const d=new Date(h.date+'T00:00:00');
+  const label=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)">'+
+    '<div style="flex:1">'+
+      '<div style="font-size:13.5px;font-weight:800">'+esc(h.name)+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+label+'</div>'+
+    '</div>'+
+    '<button class="btn-icon del" onclick="deleteHoliday(\''+h.id+'\')">Delete</button>'+
+  '</div>';
+}
+
+async function addHoliday(){
+  const date=document.getElementById('hlDate').value;
+  const name=document.getElementById('hlName').value.trim();
+  const err=document.getElementById('hlErr');
+  err.style.display='none';
+  if(!date){err.textContent='Select a date.';err.style.display='block';return;}
+  if(!name){err.textContent='Enter a holiday name.';err.style.display='block';return;}
+  try{
+    await sbPost('public_holidays',{date,name});
+    toast('Holiday added');
+    renderHolidays();
+  }catch(e){
+    err.textContent='Failed to add — date may already exist.';err.style.display='block';
+  }
+}
+
+async function deleteHoliday(id){
+  if(!confirm('Delete this holiday?'))return;
+  try{
+    await sbDel('public_holidays',id);
+    toast('Holiday deleted');
+    renderHolidays();
+  }catch(e){
+    toast('Failed to delete',true);
   }
 }
 
