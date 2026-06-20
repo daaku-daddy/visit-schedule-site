@@ -3,11 +3,13 @@
 
 ## Overview
 
-Four changes to the existing visit-schedule-site:
+Six changes to the existing visit-schedule-site:
 1. Pre-Sales dashboard UI updates (slot timings + slot count display)
 2. Kylas CRM sync via Vercel API route (Approach A)
 3. BM Dashboard removal
-4. SM/Receptionist CRM portal integration is a **future step** — deferred to Metabase portal migration
+4. Footfall data update (hours 10–20, median values from Excel analysis)
+5. Public holidays feature (Admin marks a weekday date as holiday → weekend footfall used that day)
+6. SM/Receptionist CRM portal integration is a **future step** — deferred to Metabase portal migration
 
 ---
 
@@ -142,15 +144,123 @@ SM and Receptionist dashboards (`StoreManager_Dashboard.html`, `Receptionist_Das
 
 ---
 
+---
+
+## 4. Footfall Data Update
+
+**Files changed:** `footfall_migration.sql`, `Admin.html`
+
+### Median footfall values (from `Hourly_Footfall_Corrected_Analysis.xlsx`)
+
+Hours 10–20 (10 AM – 9 PM), using **median** values per store:
+
+**JP Nagar**
+| Hour | Weekday | Weekend |
+|---|---|---|
+| 10 | 1 | 1 |
+| 11 | 4 | 6 |
+| 12 | 5 | 11 |
+| 13 | 5 | 10 |
+| 14 | 5 | 9 |
+| 15 | 5 | 9 |
+| 16 | 5 | 9 |
+| 17 | 4 | 10 |
+| 18 | 4 | 10 |
+| 19 | 4 | 7 |
+| 20 | 3 | 4 |
+
+**Whitefield**
+| Hour | Weekday | Weekend |
+|---|---|---|
+| 10 | 1 | 1 |
+| 11 | 2 | 5 |
+| 12 | 3 | 6 |
+| 13 | 3 | 7 |
+| 14 | 2 | 7 |
+| 15 | 3 | 9 |
+| 16 | 3 | 8 |
+| 17 | 3 | 7 |
+| 18 | 3 | 8 |
+| 19 | 3 | 6 |
+| 20 | 2 | 3 |
+
+**Yelahanka**
+| Hour | Weekday | Weekend |
+|---|---|---|
+| 10 | 0 | 1 |
+| 11 | 2 | 3 |
+| 12 | 2 | 4 |
+| 13 | 2 | 4 |
+| 14 | 2 | 4 |
+| 15 | 2 | 5 |
+| 16 | 2 | 4 |
+| 17 | 2 | 5 |
+| 18 | 2 | 4 |
+| 19 | 2 | 3 |
+| 20 | 2 | 2 |
+
+### footfall_migration.sql
+Rewrite to use the new hour range (10–20) and the above median values. The SQL does an `UPDATE stores SET footfall_data = '...'::jsonb WHERE name = 'Store Name'` for each store. Existing rows are updated (not inserted).
+
+### Admin footfall modal (Admin.html)
+- Input IDs: `ff_wd_10…ff_wd_20` (weekday), `ff_we_10…ff_we_20` (weekend) — drop hour 9 inputs, add hour 20
+- Label array in `buildFfGrid()` updated to `['10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM']`
+
+---
+
+## 5. Public Holidays Feature
+
+When a weekday is a public holiday, store footfall behaves like a weekend (higher traffic). Admin can mark specific dates as public holidays.
+
+### New Supabase table: `public_holidays`
+```sql
+CREATE TABLE public_holidays (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  date text NOT NULL UNIQUE,   -- 'YYYY-MM-DD'
+  name text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+```
+Holidays are global (apply to all stores). No `store_id` — public holidays affect everyone.
+
+### Admin UI
+New "Public Holidays" section inside `Admin.html` (added as a nav view or a card in the Stores view):
+- List of upcoming holidays (date + name) with a Delete button per row
+- "Add Holiday" form: date picker + holiday name text input + Add button
+- On add: `POST /rest/v1/public_holidays`
+- On delete: `DELETE /rest/v1/public_holidays?id=eq.{id}`
+
+### Pre-Sales dashboard usage
+On load, fetch `public_holidays` alongside stores:
+```js
+const holidays = await sbGet('public_holidays?select=date');
+const holidaySet = new Set(holidays.map(h => h.date));
+```
+Then in `isWeekend()` / footfall selection logic:
+```js
+function isWeekendOrHoliday(d) {
+  const dow = new Date(d + 'T00:00:00').getDay();
+  return dow === 0 || dow === 6 || holidaySet.has(d);
+}
+```
+Replace all `isWeekend(selectedDay)` calls with `isWeekendOrHoliday(selectedDay)`.
+
+---
+
+## 6. SM / Receptionist CRM Integration
+
+**Status: Deferred.**  
+SM and Receptionist dashboards (`StoreManager_Dashboard.html`, `Receptionist_Dashboard.html`) are unchanged in this release. Integration into the Metabase CRM portal is a separate future project.
+
+---
+
 ## Out of Scope
 - BM auto "Potentially Available" cron (existing pending item)
 - Daily BM status reset cron (existing pending item)
 - Receptionist / SM dashboard UI changes
-- Admin dashboard changes beyond the footfall hour range update
 
 ---
 
 ## Open Items
 1. **Kylas API permission** — admin must enable "Lead Read" on key `f3586066-...` before field mapping can be confirmed and the sync function built.
 2. **Store mapping** — how Kylas identifies which store a lead is tagged to (field name + value format) must be confirmed from a real lead response.
-3. **Footfall data for hour 20** — existing stores have footfall data for hours 9–19. Hour 20 (8–9 PM) will default to 0 until Admin updates it via "Set Footfall".
