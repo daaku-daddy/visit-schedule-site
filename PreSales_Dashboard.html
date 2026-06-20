@@ -337,6 +337,7 @@ function onFormStoreChange(storeId){
 
 async function loadData(){
   if(!selectedStore)return;
+  fetch('/api/kylas-sync').catch(()=>{});
   document.getElementById('contentArea').innerHTML=`
     <div class="panel">
       <div class="panel-head">
@@ -421,7 +422,7 @@ function renderVisitsList(){
         (v.presales_notes?'<div class="vc-notes">'+esc(v.presales_notes)+'</div>':'')+
         '<div class="vc-footer">'+
           '<span class="chip c-'+v.visit_status+'">'+stLabel+'</span>'+
-          (v.visit_status==='scheduled'?'<button class="btn-del" onclick="deleteVisit(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Cancel visit</button>':'')+
+          (v.visit_status==='scheduled'&&!v.kylas_id?'<button class="btn-del" onclick="deleteVisit(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Cancel visit</button>':'')+
         '</div>'+
       '</div>'+
     '</div>';
