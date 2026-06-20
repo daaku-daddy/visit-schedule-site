@@ -282,7 +282,6 @@ function fmtTime(t){
   const[h,m]=t.split(':').map(Number);
   const ap=h>=12?'PM':'AM';return (h%12||12)+':'+(m<10?'0'+m:m)+' '+ap;
 }
-function isWeekend(d){const dow=new Date(d+'T00:00:00').getDay();return dow===0||dow===6;}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function buildDayNav(){
