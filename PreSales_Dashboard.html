@@ -178,7 +178,6 @@
           <label>Time Slot &#42;</label>
           <select id="fTime">
             <option value="">Select time…</option>
-            <option value="09:00">9:00 AM</option>
             <option value="10:00">10:00 AM</option>
             <option value="11:00">11:00 AM</option>
             <option value="12:00">12:00 PM</option>
@@ -189,6 +188,7 @@
             <option value="17:00">5:00 PM</option>
             <option value="18:00">6:00 PM</option>
             <option value="19:00">7:00 PM</option>
+            <option value="20:00">8:00 PM</option>
           </select>
         </div>
       </div>
@@ -223,7 +223,6 @@ async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id
 
 const CATEGORIES=['Tiles','Laminates','Plywood','Panels','Wooden Flooring','Wallpapers','Quartz','HDHMR','Blockboard','Adhesives','Wall Cladding'];
 const SLOTS=[
-  {hour:9,value:'09:00',label:'9 AM – 10 AM'},
   {hour:10,value:'10:00',label:'10 AM – 11 AM'},
   {hour:11,value:'11:00',label:'11 AM – 12 PM'},
   {hour:12,value:'12:00',label:'12 PM – 1 PM'},
@@ -234,6 +233,7 @@ const SLOTS=[
   {hour:17,value:'17:00',label:'5 PM – 6 PM'},
   {hour:18,value:'18:00',label:'6 PM – 7 PM'},
   {hour:19,value:'19:00',label:'7 PM – 8 PM'},
+  {hour:20,value:'20:00',label:'8 PM – 9 PM'},
 ];
 const STATUS_LABEL={scheduled:'Scheduled',arrived:'Arrived',bm_assigned:'BM Assigned',completed:'Completed'};
 
@@ -245,6 +245,13 @@ let dayVisits=[];
 let selectedCats=[];
 let otherCats=[];
 let pollTm=null;
+
+let holidaySet=new Set();
+
+function isWeekendOrHoliday(d){
+  const dow=new Date(d+'T00:00:00').getDay();
+  return dow===0||dow===6||holidaySet.has(d);
+}
 
 function getSession(){
   const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
@@ -292,8 +299,12 @@ function selectDay(d){
 }
 
 async function loadStores(){
-  const res=await sbGet('stores?select=id,name,bm_count,footfall_data&order=name.asc');
+  const [res,hlRes]=await Promise.all([
+    sbGet('stores?select=id,name,bm_count,footfall_data&order=name.asc'),
+    sbGet('public_holidays?select=date')
+  ]);
   allStores=Array.isArray(res)?res:[];
+  holidaySet=new Set(Array.isArray(hlRes)?hlRes.map(h=>h.date):[]);
   const sel=document.getElementById('storeSelect');
   if(!allStores.length){
     sel.innerHTML='<option value="">No stores set up yet — add them in Admin</option>';
@@ -359,7 +370,7 @@ function renderSlots(){
   const store=allStores.find(s=>s.id===selectedStore.id)||selectedStore;
   const bmCount=store.bm_count||1;
   const ff=store.footfall_data||{};
-  const ffSet=isWeekend(selectedDay)?(ff.weekend||ff):(ff.weekday||ff);
+  const ffSet=isWeekendOrHoliday(selectedDay)?(ff.weekend||ff):(ff.weekday||ff);
   const rows=SLOTS.map(s=>{
     const scheduled=dayVisits.filter(v=>{
       const h=parseInt((v.visit_time||'').split(':')[0]);
@@ -378,7 +389,7 @@ function renderSlots(){
         '<div class="slot-bar"><div class="slot-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
         '<span class="slot-badge '+cls+'">'+label+'</span>'+
       '</div>'+
-      '<div class="slot-count">'+scheduled+' visit'+(scheduled===1?'':'s')+'</div>'+
+      '<div class="slot-count">'+(scheduled+footfall)+' / '+bmCount+'</div>'+
       '<div class="slot-hint">+ Schedule</div>'+
     '</div>';
   }).join('');
