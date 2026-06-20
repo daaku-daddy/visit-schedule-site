@@ -21,7 +21,6 @@ Store visit scheduling and management system for Material Depot. Separate repo, 
 | `PreSales_Dashboard.html` | Schedule visits + slot capacity grid per store | Desktop |
 | `StoreManager_Dashboard.html` | Upcoming visits + BM team management | Mobile |
 | `Receptionist_Dashboard.html` | Today's check-ins + live BM panel | Desktop/Tablet |
-| `BM_Dashboard.html` | Assigned clients + comment/house stage form | Mobile |
 | `schema.sql` | Full Supabase schema (run once in SQL editor) | — |
 | `footfall_migration.sql` | Seeds weekday/weekend footfall for JP Nagar, Whitefield, Yelahanka from Excel analysis | — |
 | `vercel.json` | `no-cache` headers on all HTML files | — |
@@ -33,8 +32,6 @@ Store visit scheduling and management system for Material Depot. Separate repo, 
 | `pre_sales` | Pre Sales | Desktop | All stores — schedule visits + capacity grid |
 | `store_manager` | Store Manager | Mobile | One store — visits + BM team |
 | `receptionist` | Receptionist | Desktop/Tablet | One store — check-in + BM assignment |
-| `store_bm` | Business Manager | Mobile | One store — assigned clients + fill comments |
-
 ## Auth / Session
 - `localStorage` key: `vs_user` → `{name, email, role, store_id}`
 - `store_id` is `null` for `admin` and `pre_sales` (cross-store roles)
@@ -45,7 +42,7 @@ Store visit scheduling and management system for Material Depot. Separate repo, 
   - `pre_sales → PreSales_Dashboard.html`
   - `store_manager → StoreManager_Dashboard.html`
   - `receptionist → Receptionist_Dashboard.html`
-  - `store_bm → BM_Dashboard.html`
+  - `store_bm` → "Access not available" message (BM dashboard removed; role reserved for future Metabase CRM portal)
 - Every dashboard reads session on load, redirects to Login.html if missing/wrong role
 - First admin must be seeded manually via Supabase SQL editor (see schema.sql comment)
 
@@ -108,7 +105,7 @@ async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id
 ### Admin.html (Desktop)
 Rail nav views:
 - **Overview**: stat cards (total users, stores, visits today, arrived today) + role breakdown
-- **Users**: table with search, Add/Edit/Reset PIN/Delete. Role dropdown has all 5 roles. Store picker shown only for `store_manager`, `receptionist`, `store_bm`. Store_id set to null for `admin` and `pre_sales`.
+- **Users**: table with search, Add/Edit/Reset PIN/Delete. Role dropdown has 4 roles (admin, pre_sales, store_manager, receptionist). Store picker shown only for `store_manager`, `receptionist`. Store_id set to null for `admin` and `pre_sales`.
 - **Stores**: card grid. Add/Edit store (name, location, bm_count). "Set Footfall" button per store → 11-input modal (9 AM–7 PM), saves to `stores.footfall_data` jsonb.
 - **Role Viewer**: Admin selects a role → picks store (if store-specific) → injects fake session into localStorage → loads dashboard in iframe → restores real admin session in `iframe.onload`
 
@@ -149,25 +146,11 @@ Split layout (always visible side by side):
 - **Assign BM modal**: shows BM cards with status. Busy BMs are greyed out and unclickable. On assign: patches visit to `bm_assigned`, posts to `visit_assignments`, patches/posts `bm_status` (increments `active_client_count`, sets `engaged`).
 - Polls every 10s (BM status needs to be near-live)
 
-### BM_Dashboard.html (Mobile)
-- Looks up own profile by email from `SESSION.email`
-- Status bar at top: shows current `bm_status.status` chip + active client count
-- "Mark Free" button: patches `bm_status` to `free`, resets `active_client_count=0`
-- Fetches `visit_assignments` for own `bm_id` → gets matching `store_visits` (today, not completed)
-- Each client card is expandable (tap to open):
-  - House Stage dropdown: Under Construction / Ready to Move / Renovation / New Build — Bare Shell
-  - Visit Notes textarea
-  - Follow-up dropdown: No follow-up / Call in 2 days / Send quotation
-  - "Save & Mark Complete" button: patches visit with all fields + `visit_status='completed'`; decrements `active_client_count` (auto-sets `free` if hits 0)
-  - Button disabled during save; error toast warns "do not close this page, try again" on failure
-- Polls every 30s
-
 ## Polling Intervals
 | Dashboard | Interval | Reason |
 |---|---|---|
 | Receptionist | 10s | BM status must update near-live |
 | StoreManager | 30s | Visit list less time-critical |
-| BM | 30s | Assignment list less time-critical |
 | PreSales | 60s | Slot capacity, low urgency |
 | Admin | None | Manual refresh |
 
@@ -194,7 +177,7 @@ Same variables as existing material-depot-site:
 --amber:#9a6200; --amberbg:#fdf2da;
 --purple:#5b3aa6;--purplebg:#efeaf8;
 ```
-Role badge CSS classes: `rb-admin` (purple), `rb-pre_sales` (navy), `rb-store_manager` (blue), `rb-receptionist` (green), `rb-store_bm` (amber)
+Role badge CSS classes: `rb-admin` (purple), `rb-pre_sales` (navy), `rb-store_manager` (blue), `rb-receptionist` (green)
 
 ## Architecture Patterns
 - Role guard on every page: reads `vs_user` from localStorage, checks `role`, redirects to Login.html on failure
@@ -234,7 +217,7 @@ Auto-deploys are linked: every push to master also triggers Vercel via GitHub in
 7. **Cancel visit (Pre Sales)** — only shown for `visit_status='scheduled'` visits. Uses `sbDel('store_visits', id)` — hard delete.
 8. **Category multi-select (Pre Sales)** — two arrays: `selectedCats` (standard chips) + `otherCats` (free-text custom entries). `buildCatGrid()` renders both. On save: `[...selectedCats,...otherCats]` saved to `categories` jsonb.
 9. **Admin Set Footfall modal** — Weekday/Weekend tabs via `switchFfTab()`. Input IDs: `ff_wd_9…ff_wd_19` (weekday), `ff_we_9…ff_we_19` (weekend). `buildFfGrid(gridId, prefix, data)` populates each tab. On open: `ff.weekday||ff` for weekday tab, `ff.weekend||{}` for weekend tab.
-10. **Admin role viewer store picker** — shown only for `store_manager`, `receptionist`, `store_bm`. Pre-loads `allStores` from init fetch.
+10. **Admin role viewer store picker** — shown only for `store_manager`, `receptionist`. Pre-loads `allStores` from init fetch.
 11. **Day nav** — `Array.from({length:7}, (_,i) => dateStr(i))` generates today + 6 forward. `dateStr(0)` = today in local timezone.
 12. **vercel.json** — `Cache-Control: no-cache` on all `*.html` to prevent stale JS on mobile browsers.
 
