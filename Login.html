@@ -55,7 +55,6 @@ const ROLE_FILES={
   pre_sales:     {label:'Pre Sales',        file:'PreSales_Dashboard.html',     note:'Slot capacity view'},
   store_manager: {label:'Store Manager',    file:'StoreManager_Dashboard.html', note:'Visit management'},
   receptionist:  {label:'Receptionist',     file:'Receptionist_Dashboard.html', note:'Check-in & BM assignment'},
-  store_bm:      {label:'Business Manager', file:'BM_Dashboard.html',           note:'Assigned clients'},
 };
 
 const $=s=>document.querySelector(s);
@@ -252,6 +251,10 @@ async function tryChangePasscode(){
 
 function successScreen(){
   const r=ROLE_FILES[state.user.role];
+  if(!r){
+    $('#card').innerHTML='<h1>Access not available</h1><p class="sub">This portal is not available for your role. Please contact your administrator.</p>';
+    return;
+  }
   localStorage.setItem(SESSION_KEY,JSON.stringify({
     name:state.user.name,
     email:state.user.email,

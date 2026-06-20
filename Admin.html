@@ -298,10 +298,10 @@ async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POS
 async function sbPatch(t,id,b){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
 async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});if(!r.ok)throw new Error('Delete failed ('+r.status+')');return true;}
 
-const ROLE_LABELS={admin:'Admin',pre_sales:'Pre Sales',store_manager:'Store Manager',receptionist:'Receptionist',store_bm:'BM'};
-const STORE_ROLES=['store_manager','receptionist','store_bm'];
+const ROLE_LABELS={admin:'Admin',pre_sales:'Pre Sales',store_manager:'Store Manager',receptionist:'Receptionist'};
+const STORE_ROLES=['store_manager','receptionist'];
 const AV_COLORS=['#5b3aa6','#1F3A5F','#2E6CA8','#1f7a3f','#9a6200'];
-const ROLE_KEYS=['admin','pre_sales','store_manager','receptionist','store_bm'];
+const ROLE_KEYS=['admin','pre_sales','store_manager','receptionist'];
 
 let SESSION=null;
 let VIEW='overview';
@@ -707,13 +707,11 @@ const VIEWER_ROLES=[
   {key:'pre_sales',label:'Pre Sales',ico:'&#128202;',desc:'Cross-store slot view'},
   {key:'store_manager',label:'Store Manager',ico:'&#128203;',desc:'Visit management'},
   {key:'receptionist',label:'Receptionist',ico:'&#127979;',desc:'Check-in & BM panel'},
-  {key:'store_bm',label:'BM',ico:'&#129309;',desc:'Assigned clients'},
 ];
 const ROLE_FILES_MAP={
   pre_sales:'PreSales_Dashboard.html',
   store_manager:'StoreManager_Dashboard.html',
   receptionist:'Receptionist_Dashboard.html',
-  store_bm:'BM_Dashboard.html',
 };
 let viewerRole=null;
 let viewerStoreId=null;
