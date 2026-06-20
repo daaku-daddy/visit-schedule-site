@@ -337,7 +337,7 @@ function onFormStoreChange(storeId){
 
 async function loadData(){
   if(!selectedStore)return;
-  fetch('/api/kylas-sync').catch(()=>{});
+  fetch('/api/kylas-sync').catch(e=>console.warn('Kylas sync failed',e));
   document.getElementById('contentArea').innerHTML=`
     <div class="panel">
       <div class="panel-head">

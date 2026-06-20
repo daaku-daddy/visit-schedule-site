@@ -30,6 +30,9 @@ function mapLead(lead) {
   const storeLabel = cf['Store'] || cf['store'] || null;
   const storeId = storeLabel ? (STORE_MAP[storeLabel] || null) : null;
 
+  // Only send fields safe to overwrite on conflict.
+  // visit_status, arrival_time, assigned_bm_id, bm_comments, availability_status
+  // are owned by SM/Receptionist and must never be reset by a sync.
   return {
     kylas_id: String(lead.id),
     customer_name: name,
@@ -37,17 +40,19 @@ function mapLead(lead) {
     visit_date: visitDate,
     visit_time: visitTime ? visitTime.replace(/^(\d):/, '0$1:') : null,
     store_id: storeId,
-    visit_status: 'scheduled',
     updated_at: new Date().toISOString(),
   };
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
   if (!KYLAS_KEY) {
     res.status(500).json({ error: 'KYLAS_API_KEY env var not set' });
+    return;
+  }
+  if (!SB_KEY) {
+    res.status(500).json({ error: 'SUPABASE_KEY env var not set' });
     return;
   }
 
@@ -74,7 +79,8 @@ export default async function handler(req, res) {
   const mapped = leads.map(mapLead).filter(l => l.visit_date && l.store_id);
 
   if (mapped.length) {
-    const upsertRes = await fetch(SB_URL + '/rest/v1/store_visits', {
+    // on_conflict=kylas_id tells Supabase which unique constraint to use for merge-duplicates
+    const upsertRes = await fetch(SB_URL + '/rest/v1/store_visits?on_conflict=kylas_id', {
       method: 'POST',
       headers: {
         'apikey': SB_KEY,
