@@ -29,67 +29,65 @@ function parseBool(val) {
   return ['true', 'yes', '1', 'done', 'called'].includes(String(val).toLowerCase().trim());
 }
 
+// Confirmed field structure from live lead (id: 50471878):
+//   customFieldValues.cfBranch: numeric option ID → metaData.idNameStore.cfBranch resolves name
+//   customFieldValues.cfVisitScheduled: ISO datetime "2026-06-21T14:00:00.000Z"
+//   customFieldValues.cfCategoriesOfInterest: [optionId] → metaData.idNameStore resolves names
+//   phoneNumbers[0].value: "9747636510"
+//   firstName: null (often absent), lastName: phone number string
+
+function storeIdFromBranch(branchOptionId, branchMeta) {
+  if (!branchOptionId) return null;
+  const branchName = branchMeta[String(branchOptionId)];
+  if (!branchName) return null;
+  const entry = Object.entries(STORE_MAP).find(
+    ([k]) => k.toLowerCase() === branchName.toLowerCase()
+  );
+  return entry ? entry[1] : null;
+}
+
 function mapLead(lead) {
-  // Name: try firstName+lastName, then full name field
-  const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ').trim()
-    || lead.name || lead.customerName || lead.fullName || '';
+  const cfv = lead.customFieldValues || {};
+  const meta = (lead.metaData || {}).idNameStore || {};
 
-  // Phone: clean to last 10 digits
-  const phone = (lead.phoneNumber || lead.mobile || lead.phone || lead.contactNumber || '')
-    .replace(/\D/g, '').slice(-10);
+  // Name — filter out phone-number-like lastName values
+  const rawName = [lead.firstName, lead.lastName]
+    .filter(s => s && !/^\+?\d[\d\s\-]{6,}$/.test(s.trim()))
+    .join(' ').trim() || null;
 
-  // Custom fields array (Kylas returns as customFieldResponses or customFields)
-  const fields = lead.customFieldResponses || lead.customFields || lead.fields || [];
+  // Phone from phoneNumbers array
+  const phones = Array.isArray(lead.phoneNumbers) ? lead.phoneNumbers : [];
+  const primary = phones.find(p => p.primary) || phones[0];
+  const phone = (primary?.value || '').replace(/\D/g, '').slice(-10) || null;
 
-  // Visit date — try common field name variants
-  const visitDate = cf(fields,
-    'Visit Date', 'visit_date', 'Appointment Date', 'Date of Visit',
-    'Scheduled Date', 'Visit Scheduled Date'
+  // Visit date + time from cfVisitScheduled ISO datetime
+  let visitDate = null, visitTime = null;
+  const vs = cfv.cfVisitScheduled;
+  if (vs) {
+    const dt = new Date(vs);
+    if (!isNaN(dt)) {
+      visitDate = vs.slice(0, 10);
+      visitTime = String(dt.getUTCHours()).padStart(2, '0') + ':' +
+                  String(dt.getUTCMinutes()).padStart(2, '0');
+    }
+  }
+
+  // Store via cfBranch option ID → metaData name → STORE_MAP (case-insensitive)
+  const storeId = storeIdFromBranch(cfv.cfBranch, meta.cfBranch || {});
+
+  // Categories: resolve option IDs via metaData
+  const catIds = Array.isArray(cfv.cfCategoriesOfInterest) ? cfv.cfCategoriesOfInterest : [];
+  const catMeta = meta.cfCategoriesOfInterest || {};
+  const categories = catIds.map(id => catMeta[String(id)]).filter(Boolean);
+
+  const presalesNotes = cfv.cfNotes || cfv.cfAdditionalComments || cfv.cfRemarks || null;
+  const presalesNotified = parseBool(
+    cfv.cfPreSalesCalled || cfv.cfClientInformed || cfv.cfCalledClient || null
   );
 
-  // Visit time — normalise to HH:MM 24h
-  const rawTime = cf(fields,
-    'Time Slot', 'visit_time', 'Appointment Time', 'Visit Time',
-    'Scheduled Time', 'Time of Visit'
-  );
-  const visitTime = rawTime
-    ? rawTime.replace(/^(\d):/, '0$1:').substring(0, 5)
-    : null;
-
-  // Store → lookup UUID from env var map
-  const storeLabel = cf(fields,
-    'Store', 'store', 'Branch', 'Store Name', 'Store Location', 'Location'
-  );
-  const storeId = storeLabel ? (STORE_MAP[storeLabel] || null) : null;
-
-  // Product categories — may be comma-separated string or already an array
-  const catRaw = cf(fields,
-    'Product Categories', 'Categories', 'categories', 'Products Interested',
-    'Products', 'Interested In', 'Category'
-  );
-  const categories = catRaw
-    ? catRaw.split(/[,;]/).map(s => s.trim()).filter(Boolean)
-    : [];
-
-  // Additional comments / pre-sales notes
-  const presalesNotes = cf(fields,
-    'Additional Comments', 'Notes', 'Comments', 'Presales Notes',
-    'Remarks', 'Special Requirements', 'Additional Notes'
-  ) || null;
-
-  // Whether pre-sales called client about partial/unavailable status
-  const notifiedRaw = cf(fields,
-    'Pre-Sales Called', 'Client Informed', 'presales_notified',
-    'Called Client', 'Client Called', 'Follow Up Done', 'Customer Notified'
-  );
-  const presalesNotified = parseBool(notifiedRaw);
-
-  // Only overwrite safe fields on upsert conflict.
-  // visit_status, arrival_time, assigned_bm_id, bm_comments,
-  // availability_status, availability_notes are SM/Receptionist owned — never included here.
   return {
     kylas_id: String(lead.id),
-    customer_name: name,
+    customer_name: rawName,
     phone,
     visit_date: visitDate,
     visit_time: visitTime,

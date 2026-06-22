@@ -1,160 +1,142 @@
 // api/kylas-webhook.js
-// Receives Kylas webhook events for lead created/updated in pipeline 31627.
+// Receives Kylas webhook POSTs for Lead Created / Lead Updated events.
 // Configure in Kylas: Settings → Webhooks → Add Webhook
 //   URL: https://visit-schedule-site.vercel.app/api/kylas-webhook
 //   Events: Lead Created, Lead Updated
-//   Pipeline filter: 31627 (DC Total Visits)
+//   Pipeline: 31627 (MD Lead pipeline)
+//
+// Confirmed field structure from live lead (id: 50471878):
+//   customFieldValues.cfBranch        → numeric option ID (e.g. 2647630)
+//   customFieldValues.cfVisitScheduled → ISO datetime "2026-06-21T14:00:00.000Z"
+//   customFieldValues.cfCategoriesOfInterest → [optionId, ...]
+//   customFieldValues.cfDcOwner        → "Harshit Naik" (DC team member name)
+//   customFieldValues.cfPsOwner        → "Aishwarya Nagaraj" (PS team member name)
+//   phoneNumbers[0].value              → "9747636510"
+//   metaData.idNameStore.cfBranch      → { "2647630": "WHITEFIELD" }
+//   metaData.idNameStore.cfCategoriesOfInterest → { "2689623": "Tiles" }
+//   firstName: null (customer name often absent)
+//   lastName: "+919747636510" (phone stored here by Kylas)
 
 const SB_URL = 'https://dzilftvisjgckmefpzxk.supabase.co';
 const SB_KEY = process.env.SUPABASE_KEY;
+// KYLAS_STORE_MAP: {"JP Nagar":"uuid","Whitefield":"uuid","Yelahanka":"uuid","Gachibowli":"uuid"}
+// Branch name matching is case-insensitive (Kylas returns "WHITEFIELD", map has "Whitefield")
 const STORE_MAP = JSON.parse(process.env.KYLAS_STORE_MAP || '{}');
-
-// Extract a custom field value — tries multiple label/key variants
-function cf(values, ...labels) {
-  if (!values || typeof values !== 'object') return null;
-  // customFieldValues is a flat object: { cfVisitScheduled: '...', cfDcOwner: '...', ... }
-  for (const label of labels) {
-    if (values[label] != null && values[label] !== '') return String(values[label]).trim();
-    // Also try camelCase variant
-    const key = label.replace(/[^a-zA-Z0-9]/g, '');
-    if (values[key] != null && values[key] !== '') return String(values[key]).trim();
-  }
-  return null;
-}
 
 function parseBool(val) {
   if (!val) return false;
   return ['true', 'yes', '1', 'done', 'called'].includes(String(val).toLowerCase().trim());
 }
 
-function mapLead(lead) {
-  // Name from firstName + lastName or title
-  const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ').trim()
-    || lead.name || lead.title || '';
-
-  // Phone from phoneNumbers array or direct field
-  const phones = Array.isArray(lead.phoneNumbers) ? lead.phoneNumbers : [];
-  const primaryPhone = phones.find(p => p.primary) || phones[0];
-  const phone = (primaryPhone?.value || lead.phoneNumber || lead.mobile || '')
-    .replace(/\D/g, '').slice(-10);
-
-  // Custom fields — Kylas sends as customFieldValues flat object
-  const cfv = lead.customFieldValues || {};
-
-  // Visit date/time
-  const visitScheduled = cf(cfv,
-    'cfVisitScheduled', 'cfVisitScheduledAt', 'Visit Scheduled',
-    'cfVisitDate', 'Visit Date', 'visit_date'
+function storeIdFromBranch(branchOptionId, branchMeta) {
+  if (!branchOptionId) return null;
+  const branchName = branchMeta[String(branchOptionId)];
+  if (!branchName) return null;
+  // Case-insensitive match ("WHITEFIELD" → "Whitefield" entry in map)
+  const entry = Object.entries(STORE_MAP).find(
+    ([k]) => k.toLowerCase() === branchName.toLowerCase()
   );
+  return entry ? entry[1] : null;
+}
+
+function mapLead(lead) {
+  const cfv = lead.customFieldValues || {};
+  const meta = (lead.metaData || {}).idNameStore || {};
+
+  // Customer name — firstName is usually null; lastName often has the phone number.
+  // Filter out any value that looks like a phone number.
+  const rawName = [lead.firstName, lead.lastName]
+    .filter(s => s && !/^\+?\d[\d\s\-]{6,}$/.test(s.trim()))
+    .join(' ').trim() || null;
+
+  // Phone — primary from phoneNumbers array
+  const phones = Array.isArray(lead.phoneNumbers) ? lead.phoneNumbers : [];
+  const primary = phones.find(p => p.primary) || phones[0];
+  const phone = (primary?.value || '').replace(/\D/g, '').slice(-10) || null;
+
+  // Visit date + time from cfVisitScheduled ISO datetime
   let visitDate = null, visitTime = null;
-  if (visitScheduled) {
-    // May be ISO datetime "2026-06-25T10:00:00.000Z" or date "2026-06-25" or "10:00"
-    if (visitScheduled.includes('T')) {
-      const dt = new Date(visitScheduled);
-      visitDate = dt.toISOString().slice(0, 10);
-      const h = String(dt.getUTCHours()).padStart(2, '0');
-      const m = String(dt.getUTCMinutes()).padStart(2, '0');
-      visitTime = `${h}:${m}`;
-    } else if (visitScheduled.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      visitDate = visitScheduled;
-    } else {
-      visitDate = visitScheduled;
+  const vs = cfv.cfVisitScheduled;
+  if (vs) {
+    const dt = new Date(vs);
+    if (!isNaN(dt)) {
+      visitDate = vs.slice(0, 10); // YYYY-MM-DD
+      // Extract HH:MM directly from ISO string (Kylas stores as local time treated as UTC)
+      visitTime = String(dt.getUTCHours()).padStart(2, '0') + ':' +
+                  String(dt.getUTCMinutes()).padStart(2, '0');
     }
   }
 
-  // Separate time field if present
-  const timeField = cf(cfv, 'cfVisitTime', 'cfTimeSlot', 'Time Slot', 'visit_time');
-  if (timeField && !visitTime) {
-    visitTime = timeField.replace(/^(\d):/, '0$1:').substring(0, 5);
-  }
+  // Store UUID via cfBranch option ID → metaData name → STORE_MAP
+  const storeId = storeIdFromBranch(cfv.cfBranch, meta.cfBranch || {});
 
-  // Store — try cfStore, cfBranch (option ID), or store label
-  const storeLabel = cf(cfv, 'cfStore', 'cfBranch', 'Store', 'Branch', 'store', 'branch');
-  const storeId = storeLabel ? (STORE_MAP[storeLabel] || null) : null;
+  // Categories: resolve option ID array via metaData
+  const catIds = Array.isArray(cfv.cfCategoriesOfInterest) ? cfv.cfCategoriesOfInterest : [];
+  const catMeta = meta.cfCategoriesOfInterest || {};
+  const categories = catIds.map(id => catMeta[String(id)]).filter(Boolean);
 
-  // Categories
-  const catRaw = cf(cfv,
-    'cfProductCategories', 'cfCategories', 'Product Categories',
-    'Categories', 'cfProductsInterested', 'Products Interested'
-  );
-  const categories = catRaw
-    ? catRaw.split(/[,;]/).map(s => s.trim()).filter(Boolean)
-    : [];
+  // Notes/comments — Kylas may add notes as activities; check common field names
+  const presalesNotes = cfv.cfNotes || cfv.cfAdditionalComments ||
+                        cfv.cfRemarks || cfv.cfComments || null;
 
-  // Pre-sales notes / additional comments
-  const presalesNotes = cf(cfv,
-    'cfAdditionalComments', 'cfNotes', 'Additional Comments',
-    'Notes', 'cfRemarks', 'Remarks', 'cfDescription'
-  ) || lead.description || null;
-
-  // Whether pre-sales called the client about partial/unavailable stock
-  const notifiedRaw = cf(cfv,
-    'cfPreSalesCalled', 'cfClientInformed', 'Pre-Sales Called',
-    'Client Informed', 'cfCalledClient', 'cfCustomerNotified'
+  // Whether pre-sales called client about partial/unavailable products
+  const presalesNotified = parseBool(
+    cfv.cfPreSalesCalled || cfv.cfClientInformed || cfv.cfCalledClient || null
   );
 
   return {
     kylas_id: String(lead.id),
-    customer_name: name || null,
-    phone: phone || null,
+    customer_name: rawName,
+    phone,
     visit_date: visitDate,
     visit_time: visitTime,
     store_id: storeId,
     categories,
     presales_notes: presalesNotes,
-    presales_notified: parseBool(notifiedRaw),
+    presales_notified: presalesNotified,
     updated_at: new Date().toISOString(),
   };
 }
 
 export default async function handler(req, res) {
-  // Allow CORS preflight
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-
-  // Only accept POST
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-
-  if (!SB_KEY) {
-    res.status(500).json({ error: 'SUPABASE_KEY not set' });
-    return;
-  }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  if (!SB_KEY) { res.status(500).json({ error: 'SUPABASE_KEY not set' }); return; }
 
   let payload;
   try {
     payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   } catch {
-    res.status(400).json({ error: 'Invalid JSON body' });
+    res.status(400).json({ error: 'Invalid JSON' });
     return;
   }
 
-  // Kylas webhook payload: { event: 'LEAD_CREATED'|'LEAD_UPDATED', data: { lead: {...} } }
-  // or sometimes: { event: '...', lead: {...} }
-  const lead = payload?.data?.lead || payload?.data || payload?.lead || payload;
+  // Kylas webhook shapes: { event, data: { lead } } or { event, lead } or just the lead object
+  const lead = payload?.data?.lead || payload?.lead || payload?.data || payload;
 
   if (!lead?.id) {
-    // Not a lead event we can process — acknowledge and ignore
     res.status(200).json({ status: 'ignored', reason: 'no lead id' });
+    return;
+  }
+
+  // Only process leads from pipeline 31627 (MD Lead pipeline)
+  const pipelineId = lead.pipeline?.id || lead.pipelineId;
+  if (pipelineId && pipelineId !== 31627) {
+    res.status(200).json({ status: 'ignored', reason: 'wrong pipeline', pipeline: pipelineId });
     return;
   }
 
   const mapped = mapLead(lead);
 
-  // Skip if no visit date (not a visit scheduling lead)
   if (!mapped.visit_date) {
-    res.status(200).json({ status: 'ignored', reason: 'no visit_date', kylas_id: mapped.kylas_id });
+    res.status(200).json({ status: 'ignored', reason: 'no cfVisitScheduled', kylas_id: mapped.kylas_id });
     return;
   }
-
-  // Skip if no store mapping
   if (!mapped.store_id) {
-    res.status(200).json({ status: 'ignored', reason: 'store not mapped', kylas_id: mapped.kylas_id });
+    res.status(200).json({ status: 'ignored', reason: 'cfBranch not in STORE_MAP', kylas_id: mapped.kylas_id });
     return;
   }
 
-  // Upsert to Supabase on kylas_id conflict
   const upsertRes = await fetch(SB_URL + '/rest/v1/store_visits?on_conflict=kylas_id', {
     method: 'POST',
     headers: {
@@ -172,5 +154,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  res.status(200).json({ status: 'ok', kylas_id: mapped.kylas_id, visit_date: mapped.visit_date });
+  res.status(200).json({
+    status: 'ok',
+    kylas_id: mapped.kylas_id,
+    visit_date: mapped.visit_date,
+    visit_time: mapped.visit_time,
+    store_id: mapped.store_id,
+    categories: mapped.categories,
+  });
 }
