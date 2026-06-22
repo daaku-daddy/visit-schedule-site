@@ -87,7 +87,7 @@ function mapLead(lead) {
 
   return {
     kylas_id: String(lead.id),
-    customer_name: rawName,
+    customer_name: rawName || phone || 'Unknown',
     phone,
     visit_date: visitDate,
     visit_time: visitTime,
