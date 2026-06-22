@@ -1,8 +1,7 @@
 // api/kylas-sync.js
-// Fetches leads from Kylas, upserts into Supabase store_visits.
-// Called by PreSales_Dashboard on load and every 60s poll.
-// FIELD MAPPING: confirm field names against a real Kylas lead response
-// once "Lead Read" permission is enabled on the API key.
+// Fetches leads from Kylas CRM, upserts into Supabase store_visits.
+// Triggered fire-and-forget by PreSales_Dashboard every 60s.
+// Safe fields only are written on conflict — SM/Receptionist operational fields are never overwritten.
 
 const KYLAS_API = 'https://api.kylas.io/v1/leads';
 const SB_URL = 'https://dzilftvisjgckmefpzxk.supabase.co';
@@ -10,36 +9,94 @@ const SB_KEY = process.env.SUPABASE_KEY;
 const KYLAS_KEY = process.env.KYLAS_API_KEY;
 
 // Map Kylas store label → Supabase store UUID.
-// Populate once you fetch a real lead and see the store field value.
-// Example: {'JP Nagar': 'uuid-here', 'Whitefield': 'uuid-here'}
+// Set KYLAS_STORE_MAP env var in Vercel: '{"JP Nagar":"uuid","Whitefield":"uuid","Yelahanka":"uuid"}'
 const STORE_MAP = JSON.parse(process.env.KYLAS_STORE_MAP || '{}');
 
+// Extract a custom field value by trying multiple label variants (case-insensitive)
+function cf(fields, ...labels) {
+  for (const label of labels) {
+    const f = fields.find(x => {
+      const name = (x.fieldName || x.label || x.name || x.field_name || '').toLowerCase();
+      return name === label.toLowerCase();
+    });
+    if (f && f.value != null && f.value !== '') return String(f.value).trim();
+  }
+  return null;
+}
+
+function parseBool(val) {
+  if (!val) return false;
+  return ['true', 'yes', '1', 'done', 'called'].includes(String(val).toLowerCase().trim());
+}
+
 function mapLead(lead) {
-  // ── FIELD NAMES: verify against real Kylas lead response ──
-  // Common patterns: lead.firstName + lead.lastName, or lead.name
-  const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ') || lead.name || '';
-  const phone = (lead.phoneNumber || lead.mobile || '').replace(/\D/g, '').slice(-10);
+  // Name: try firstName+lastName, then full name field
+  const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ').trim()
+    || lead.name || lead.customerName || lead.fullName || '';
 
-  // Custom fields come back as an array: lead.customFieldResponses
-  // Each entry: { fieldName: 'Visit Date', value: '2026-06-25' }
-  const cf = {};
-  (lead.customFieldResponses || []).forEach(f => { cf[f.fieldName] = f.value; });
+  // Phone: clean to last 10 digits
+  const phone = (lead.phoneNumber || lead.mobile || lead.phone || lead.contactNumber || '')
+    .replace(/\D/g, '').slice(-10);
 
-  const visitDate = cf['Visit Date'] || cf['visit_date'] || null;
-  const visitTime = cf['Time Slot'] || cf['visit_time'] || null;
-  const storeLabel = cf['Store'] || cf['store'] || null;
+  // Custom fields array (Kylas returns as customFieldResponses or customFields)
+  const fields = lead.customFieldResponses || lead.customFields || lead.fields || [];
+
+  // Visit date — try common field name variants
+  const visitDate = cf(fields,
+    'Visit Date', 'visit_date', 'Appointment Date', 'Date of Visit',
+    'Scheduled Date', 'Visit Scheduled Date'
+  );
+
+  // Visit time — normalise to HH:MM 24h
+  const rawTime = cf(fields,
+    'Time Slot', 'visit_time', 'Appointment Time', 'Visit Time',
+    'Scheduled Time', 'Time of Visit'
+  );
+  const visitTime = rawTime
+    ? rawTime.replace(/^(\d):/, '0$1:').substring(0, 5)
+    : null;
+
+  // Store → lookup UUID from env var map
+  const storeLabel = cf(fields,
+    'Store', 'store', 'Branch', 'Store Name', 'Store Location', 'Location'
+  );
   const storeId = storeLabel ? (STORE_MAP[storeLabel] || null) : null;
 
-  // Only send fields safe to overwrite on conflict.
-  // visit_status, arrival_time, assigned_bm_id, bm_comments, availability_status
-  // are owned by SM/Receptionist and must never be reset by a sync.
+  // Product categories — may be comma-separated string or already an array
+  const catRaw = cf(fields,
+    'Product Categories', 'Categories', 'categories', 'Products Interested',
+    'Products', 'Interested In', 'Category'
+  );
+  const categories = catRaw
+    ? catRaw.split(/[,;]/).map(s => s.trim()).filter(Boolean)
+    : [];
+
+  // Additional comments / pre-sales notes
+  const presalesNotes = cf(fields,
+    'Additional Comments', 'Notes', 'Comments', 'Presales Notes',
+    'Remarks', 'Special Requirements', 'Additional Notes'
+  ) || null;
+
+  // Whether pre-sales called client about partial/unavailable status
+  const notifiedRaw = cf(fields,
+    'Pre-Sales Called', 'Client Informed', 'presales_notified',
+    'Called Client', 'Client Called', 'Follow Up Done', 'Customer Notified'
+  );
+  const presalesNotified = parseBool(notifiedRaw);
+
+  // Only overwrite safe fields on upsert conflict.
+  // visit_status, arrival_time, assigned_bm_id, bm_comments,
+  // availability_status, availability_notes are SM/Receptionist owned — never included here.
   return {
     kylas_id: String(lead.id),
     customer_name: name,
     phone,
     visit_date: visitDate,
-    visit_time: visitTime ? visitTime.replace(/^(\d):/, '0$1:') : null,
+    visit_time: visitTime,
     store_id: storeId,
+    categories,
+    presales_notes: presalesNotes,
+    presales_notified: presalesNotified,
     updated_at: new Date().toISOString(),
   };
 }
@@ -56,30 +113,38 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Fetch leads from Kylas
-  let leads;
+  // Fetch up to 2 pages of leads (200 total) from Kylas
+  let leads = [];
   try {
-    const r = await fetch(KYLAS_API + '?page-size=100', {
-      headers: { 'api-key': KYLAS_KEY, 'Accept': 'application/json' },
-    });
-    if (!r.ok) {
-      const body = await r.text();
-      res.status(502).json({ error: 'Kylas API error', status: r.status, body });
-      return;
+    for (let page = 1; page <= 2; page++) {
+      const r = await fetch(`${KYLAS_API}?page-size=100&page=${page}`, {
+        headers: {
+          'api-key': KYLAS_KEY,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!r.ok) {
+        const body = await r.text();
+        res.status(502).json({ error: 'Kylas API error', status: r.status, body });
+        return;
+      }
+      const data = await r.json();
+      // Handle multiple Kylas response shapes
+      const batch = Array.isArray(data) ? data
+        : (data.data || data.list || data.leads || data.response?.data || []);
+      leads = leads.concat(batch);
+      if (batch.length < 100) break; // reached last page
     }
-    const data = await r.json();
-    // Kylas returns { data: [...] } or just an array — handle both
-    leads = Array.isArray(data) ? data : (data.data || []);
   } catch (e) {
     res.status(502).json({ error: 'Failed to reach Kylas', detail: e.message });
     return;
   }
 
-  // Map and upsert to Supabase
+  // Map leads, skip any without both visit_date and store_id
   const mapped = leads.map(mapLead).filter(l => l.visit_date && l.store_id);
 
   if (mapped.length) {
-    // on_conflict=kylas_id tells Supabase which unique constraint to use for merge-duplicates
     const upsertRes = await fetch(SB_URL + '/rest/v1/store_visits?on_conflict=kylas_id', {
       method: 'POST',
       headers: {
@@ -97,5 +162,9 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ synced: mapped.length, skipped: leads.length - mapped.length });
+  res.status(200).json({
+    synced: mapped.length,
+    skipped: leads.length - mapped.length,
+    total_fetched: leads.length,
+  });
 }

@@ -84,3 +84,8 @@ create table if not exists public_holidays (
   name text not null,
   created_at timestamptz default now()
 );
+
+-- Migration: add presales_notified column (run once if table already exists)
+-- Tracks whether pre-sales called the client about partial/unavailable product availability.
+-- Synced from Kylas CRM via api/kylas-sync.js.
+alter table store_visits add column if not exists presales_notified boolean default false;

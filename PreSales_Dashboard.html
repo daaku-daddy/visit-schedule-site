@@ -5,119 +5,168 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Visit Schedule — Pre Sales</title>
 <style>
-  :root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;--purple:#5b3aa6;--purplebg:#efeaf8;}
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
+:root{--navy:#1F3A5F;--navy2:#16294a;--blue:#2E6CA8;--yellow:#F4C20D;--ink:#1b2230;--muted:#67748a;--line:#dde3ec;--bg:#eef1f6;--card:#fff;--green:#1f7a3f;--greenbg:#e6f3ea;--red:#b3261e;--redbg:#fbeae8;--amber:#9a6200;--amberbg:#fdf2da;--purple:#5b3aa6;--purplebg:#efeaf8;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
 
-  header{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:14px;height:54px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);}
-  .logo{width:32px;height:32px;border-radius:8px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:14px;flex:0 0 auto;}
-  .brand .t{font-size:10px;color:#9fb2cd;letter-spacing:1px;font-weight:700;}
-  .brand .h{font-size:14px;font-weight:700;}
-  .hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
-  .user-pill{font-size:12.5px;color:#cdd8e8;}
-  .signout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#cdd8e8;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;}
-  .signout-btn:hover{background:rgba(255,255,255,.2);}
+header{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:14px;height:54px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.logo{width:32px;height:32px;border-radius:8px;background:var(--yellow);color:var(--navy);font-weight:800;display:grid;place-items:center;font-size:14px;flex:0 0 auto;}
+.brand .t{font-size:10px;color:#9fb2cd;letter-spacing:1px;font-weight:700;}
+.brand .h{font-size:14px;font-weight:700;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.user-pill{font-size:12.5px;color:#cdd8e8;}
+.signout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#cdd8e8;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+.signout-btn:hover{background:rgba(255,255,255,.2);}
 
-  .controls{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:54px;z-index:40;}
-  .store-select{padding:8px 12px;border:2px solid var(--line);border-radius:9px;font-size:13.5px;color:var(--ink);background:#fff;min-width:200px;font-weight:600;}
-  .store-select:focus{outline:none;border-color:var(--blue);}
-  .day-nav{display:flex;gap:6px;overflow-x:auto;flex:1;}
-  .day-chip{flex:0 0 auto;padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:2px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;transition:all .15s;}
-  .day-chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
-  .day-chip:hover:not(.active){border-color:var(--blue);color:var(--blue);}
-  .btn-schedule{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto;}
-  .btn-schedule:hover{background:var(--navy2);}
+.controls{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:54px;z-index:40;}
+.store-select{padding:8px 12px;border:2px solid var(--line);border-radius:9px;font-size:13.5px;color:var(--ink);background:#fff;min-width:200px;font-weight:600;}
+.store-select:focus{outline:none;border-color:var(--blue);}
+.btn-schedule{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;margin-left:auto;}
+.btn-schedule:hover{background:var(--navy2);}
 
-  .content-area{display:grid;grid-template-columns:1fr 380px;gap:16px;padding:16px;align-items:start;}
-  @media(max-width:960px){.content-area{grid-template-columns:1fr;}}
+/* No store */
+.no-store{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 108px);padding:40px;text-align:center;color:var(--muted);}
+.ns-ico{font-size:48px;margin-bottom:16px;}
+.ns-msg{font-size:16px;font-weight:700;color:var(--ink);}
+.ns-sub{font-size:13px;margin-top:6px;}
 
-  /* --- Slot grid --- */
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(20,40,80,.06);}
-  .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-  .panel-head h2{font-size:15px;font-weight:800;color:var(--navy);}
-  .panel-sub{font-size:12px;color:var(--muted);}
+/* Main layout */
+.main-wrap{padding:16px 20px 60px;display:flex;flex-direction:column;gap:12px;}
 
-  .legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);}
-  .legend span{display:flex;align-items:center;gap:4px;}
-  .ldot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+/* Week at a Glance */
+.glance-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(20,40,80,.07);}
+.glance-hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;}
+.glance-hd h2{font-size:14px;font-weight:800;color:var(--navy);}
+.glance-legend{display:flex;gap:10px;font-size:11px;color:var(--muted);}
+.glance-legend span{display:flex;align-items:center;gap:4px;}
+.ldot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.glance-store-name{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700;}
 
-  .slot-row{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;cursor:pointer;transition:background .12s;}
-  .slot-row:last-child{border-bottom:0;}
-  .slot-row:hover{background:#f5f8fd;}
-  .slot-row:hover .slot-hint{opacity:1;}
-  .slot-time{font-size:13px;font-weight:800;color:var(--ink);min-width:130px;}
-  .slot-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;}
-  .slot-bar{flex:1;height:7px;border-radius:4px;background:#eef1f6;overflow:hidden;}
-  .slot-bar-fill{height:100%;border-radius:4px;transition:width .3s;}
-  .slot-badge{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;white-space:nowrap;}
-  .sb-green{background:var(--greenbg);color:var(--green);}
-  .sb-orange{background:var(--amberbg);color:var(--amber);}
-  .sb-red{background:var(--redbg);color:var(--red);}
-  .slot-count{font-size:12px;color:var(--muted);min-width:64px;text-align:right;}
-  .slot-hint{font-size:11px;color:var(--blue);font-weight:700;opacity:0;transition:opacity .12s;white-space:nowrap;}
+/* Week grid */
+.wk-grid{display:grid;grid-template-columns:72px repeat(7,1fr);overflow-x:auto;}
+.wk-corner{background:#f7f9fc;border-bottom:1px solid var(--line);border-right:1px solid var(--line);}
+.wk-day-hd{padding:10px 4px;text-align:center;background:#f7f9fc;border-bottom:1px solid var(--line);border-right:1px solid var(--line);cursor:pointer;transition:background .15s;user-select:none;}
+.wk-day-hd:hover:not(.sel){background:#eef3fb;}
+.wk-day-hd.sel{background:var(--navy);color:#fff;}
+.wk-wd{font-size:9px;font-weight:800;opacity:.65;letter-spacing:.6px;text-transform:uppercase;}
+.wk-num{font-size:17px;font-weight:900;line-height:1.1;margin-top:1px;}
+.wk-day-hd.sel .wk-wd{opacity:.6;}
+.wk-band-lbl{padding:8px 10px;background:#f7f9fc;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;}
+.wk-bl-name{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.wk-bl-sub{font-size:9px;color:var(--muted);margin-top:2px;opacity:.7;}
+.wk-cell{padding:5px 3px;text-align:center;cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:filter .12s;user-select:none;}
+.wk-cell:hover{filter:brightness(.93);}
+.wk-cell.sel{box-shadow:inset 0 0 0 2px var(--navy);}
+.wk-inner{border-radius:8px;padding:6px 3px;font-size:15px;font-weight:900;line-height:1;min-height:42px;display:flex;align-items:center;justify-content:center;}
+.wg-green{background:var(--greenbg);color:var(--green);}
+.wg-orange{background:var(--amberbg);color:var(--amber);}
+.wg-red{background:var(--redbg);color:var(--red);}
+.wg-muted{background:#eef1f6;color:var(--muted);}
 
-  /* --- Visits panel --- */
-  .visit-card{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;}
-  .visit-card:last-child{border-bottom:0;}
-  .vc-time{font-size:12px;font-weight:800;color:var(--navy);background:#eef3fb;border-radius:6px;padding:3px 8px;white-space:nowrap;flex:0 0 auto;margin-top:2px;}
-  .vc-name{font-size:13.5px;font-weight:800;}
-  .vc-phone{font-size:12px;color:var(--muted);margin-top:1px;}
-  .vc-cats{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
-  .cat-tag{font-size:10.5px;font-weight:700;background:#eef1f6;color:var(--muted);border-radius:20px;padding:2px 8px;}
-  .vc-notes{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;}
-  .chip{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 8px;}
-  .c-scheduled{background:#eef1f6;color:var(--muted);}
-  .c-arrived{background:var(--greenbg);color:var(--green);}
-  .c-bm_assigned{background:#e4f0fb;color:var(--blue);}
-  .c-completed{background:var(--greenbg);color:var(--green);}
-  .vc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
-  .btn-del{background:transparent;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;}
-  .btn-del:hover{border-color:var(--red);color:var(--red);}
+/* Two-column panel layout */
+.panels-row{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start;}
 
-  /* --- Empty / loading --- */
-  .empty{text-align:center;padding:48px 16px;color:var(--muted);}
-  .empty .e-ico{font-size:36px;margin-bottom:10px;}
-  .empty .e-msg{font-size:14px;font-weight:700;}
-  .empty .e-sub{font-size:12.5px;margin-top:5px;}
-  .loading-row{text-align:center;padding:40px;color:var(--muted);}
-  .spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* Panel */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(20,40,80,.07);}
+.panel-hd{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.panel-hd h2{font-size:15px;font-weight:800;color:var(--navy);}
+.panel-sub{font-size:12px;color:var(--muted);}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);}
+.legend span{display:flex;align-items:center;gap:4px;}
 
-  /* --- Modal --- */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
-  .overlay.open{display:flex;}
-  .modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-  .modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:1;}
-  .modal-head h3{font-size:16px;font-weight:800;color:var(--navy);}
-  .modal-close{margin-left:auto;background:transparent;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px;}
-  .modal-body{padding:20px;}
-  .form-group{margin-bottom:16px;}
-  .form-group label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
-  .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit;}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue);}
-  .form-group textarea{min-height:72px;resize:vertical;}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .cat-grid{display:flex;flex-wrap:wrap;gap:8px;}
-  .cat-btn{border:2px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .12s;}
-  .cat-btn.active{border-color:var(--navy);background:var(--navy);color:#fff;}
-  .form-error{background:var(--redbg);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:10px;display:none;}
-  .form-error.show{display:block;}
-  .modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;}
-  .btn-cancel{background:#f0f2f5;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);}
-  .btn-primary{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;}
-  .btn-primary:hover{background:var(--navy2);}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+/* Slot section dividers */
+.slot-section{padding:7px 16px;font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;background:#f7f9fc;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;}
+.slot-section::after{content:'';flex:1;height:1px;background:var(--line);}
 
-  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap;}
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* Slot rows */
+.slot-row{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;cursor:pointer;transition:background .12s;}
+.slot-row:last-child{border-bottom:0;}
+.slot-row:hover{background:#f5f8fd;}
+.slot-row:hover .slot-hint{opacity:1;}
+.slot-time{font-size:13px;font-weight:800;color:var(--ink);min-width:130px;}
+.slot-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;}
+.slot-bar{flex:1;height:7px;border-radius:4px;background:#eef1f6;overflow:hidden;}
+.slot-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+.slot-badge{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;white-space:nowrap;}
+.sb-green{background:var(--greenbg);color:var(--green);}
+.sb-orange{background:var(--amberbg);color:var(--amber);}
+.sb-red{background:var(--redbg);color:var(--red);}
+.slot-count{font-size:12px;color:var(--muted);min-width:52px;text-align:right;}
+.slot-hint{font-size:11px;color:var(--blue);font-weight:700;opacity:0;transition:opacity .12s;white-space:nowrap;}
 
-  .no-store{display:flex;align-items:center;justify-content:center;min-height:320px;padding:40px;text-align:center;color:var(--muted);grid-column:1/-1;}
-  .no-store .e-ico{font-size:48px;margin-bottom:16px;}
-  .no-store .e-msg{font-size:16px;font-weight:700;color:var(--ink);}
-  .no-store .e-sub{font-size:13px;margin-top:6px;}
+/* Visit cards */
+.visit-card{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:stretch;gap:12px;}
+.visit-card:last-child{border-bottom:0;}
+.vc-stripe{width:4px;border-radius:2px;flex:0 0 4px;min-height:48px;}
+.vc-time{font-size:12px;font-weight:800;color:var(--navy);background:#eef3fb;border-radius:6px;padding:3px 8px;white-space:nowrap;flex:0 0 auto;height:fit-content;margin-top:1px;}
+.vc-body{flex:1;min-width:0;}
+.vc-name{font-size:13px;font-weight:800;}
+.vc-phone{font-size:12px;color:var(--muted);margin-top:2px;}
+.vc-cats{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.cat-tag{font-size:10.5px;font-weight:700;background:#eef1f6;color:var(--muted);border-radius:20px;padding:2px 8px;}
+.vc-notes{font-size:11.5px;color:var(--muted);margin-top:4px;font-style:italic;}
+/* Availability section */
+.vc-avail{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.avail-chip{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 9px;}
+.av-pending{background:#eef1f6;color:var(--muted);}
+.av-available{background:var(--greenbg);color:var(--green);}
+.av-partial{background:var(--amberbg);color:var(--amber);}
+.av-unavailable{background:var(--redbg);color:var(--red);}
+.avail-notes{font-size:11px;color:var(--muted);font-style:italic;margin-top:3px;width:100%;}
+/* Presales notified badge */
+.notif-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;}
+.nb-informed{background:var(--greenbg);color:var(--green);}
+.nb-not-informed{background:var(--amberbg);color:var(--amber);}
+/* Visit footer */
+.vc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.chip{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 8px;}
+.c-scheduled{background:#eef1f6;color:var(--muted);}
+.c-arrived{background:var(--greenbg);color:var(--green);}
+.c-bm_assigned{background:#e4f0fb;color:var(--blue);}
+.c-completed{background:var(--greenbg);color:var(--green);}
+.btn-del{background:transparent;border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;}
+.btn-del:hover{border-color:var(--red);color:var(--red);}
+
+/* States */
+.empty{text-align:center;padding:48px 16px;color:var(--muted);}
+.empty .e-ico{font-size:36px;margin-bottom:10px;}
+.empty .e-msg{font-size:14px;font-weight:700;}
+.empty .e-sub{font-size:12.5px;margin-top:5px;}
+.loading-row{text-align:center;padding:40px;color:var(--muted);}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(31,58,95,.15);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;position:sticky;top:0;background:#fff;z-index:1;}
+.modal-head h3{font-size:16px;font-weight:800;color:var(--navy);}
+.modal-close{margin-left:auto;background:transparent;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px;}
+.modal-body{padding:20px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue);}
+.form-group textarea{min-height:72px;resize:vertical;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.cat-btn{border:2px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .12s;}
+.cat-btn.active{border-color:var(--navy);background:var(--navy);color:#fff;}
+.form-error{background:var(--redbg);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:10px;display:none;}
+.form-error.show{display:block;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;}
+.btn-cancel{background:#f0f2f5;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);}
+.btn-primary{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-primary:hover{background:var(--navy2);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">VS</div>
   <div class="brand"><div class="t">MATERIAL DEPOT</div><div class="h">Visit Schedule</div></div>
@@ -129,20 +178,62 @@
 
 <div class="controls">
   <select class="store-select" id="storeSelect" onchange="onStoreChange(this.value)">
-    <option value="">Select store…</option>
+    <option value="">Select store&#8230;</option>
   </select>
-  <div class="day-nav" id="dayNav"></div>
   <button class="btn-schedule" onclick="openSchedule(null)">&#43; Schedule Visit</button>
 </div>
 
-<div class="content-area" id="contentArea">
-  <div class="no-store">
-    <div>
-      <div class="e-ico">&#127978;</div>
-      <div class="e-msg">Select a store to get started</div>
-      <div class="e-sub">You'll see slot capacity and today's visits.</div>
-    </div>
+<div id="noStore" class="no-store">
+  <div>
+    <div class="ns-ico">&#127978;</div>
+    <div class="ns-msg">Select a store to get started</div>
+    <div class="ns-sub">You&#39;ll see the week overview, slot capacity, and visits.</div>
   </div>
+</div>
+
+<div class="main-wrap" id="mainWrap" style="display:none">
+
+  <!-- 1. Week at a Glance -->
+  <div class="glance-card">
+    <div class="glance-hd">
+      <h2>Week at a Glance</h2>
+      <div class="glance-legend">
+        <span><span class="ldot" style="background:var(--green)"></span>Free</span>
+        <span><span class="ldot" style="background:var(--amber)"></span>Busy</span>
+        <span><span class="ldot" style="background:var(--red)"></span>Full</span>
+      </div>
+      <span class="glance-store-name" id="glanceStoreName"></span>
+    </div>
+    <div class="wk-grid" id="weekGrid"></div>
+  </div>
+
+  <!-- 2. Side-by-side panels: Slot Capacity (left) + Visits (right) -->
+  <div class="panels-row">
+
+    <!-- Slot Capacity Panel -->
+    <div class="panel" id="slotsPanel">
+      <div class="panel-hd">
+        <h2>Slot Capacity</h2>
+        <div class="legend">
+          <span><span class="ldot" style="background:var(--green)"></span>Free &lt;50%</span>
+          <span><span class="ldot" style="background:var(--amber)"></span>Busy 50&#8211;80%</span>
+          <span><span class="ldot" style="background:var(--red)"></span>Full &#8805;80%</span>
+        </div>
+      </div>
+      <div id="slotGrid"><div class="loading-row"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- Visits Panel -->
+    <div class="panel" id="visitsPanel">
+      <div class="panel-hd">
+        <h2 id="visitsPanelTitle">Visits</h2>
+        <span class="panel-sub" id="visitsPanelSub"></span>
+      </div>
+      <div id="visitsList"></div>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- Schedule Visit Modal -->
@@ -165,9 +256,7 @@
       </div>
       <div class="form-group">
         <label>Store &#42;</label>
-        <select id="fStore" onchange="onFormStoreChange(this.value)">
-          <option value="">Select store…</option>
-        </select>
+        <select id="fStore"></select>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -177,7 +266,7 @@
         <div class="form-group">
           <label>Time Slot &#42;</label>
           <select id="fTime">
-            <option value="">Select time…</option>
+            <option value="">Select time&#8230;</option>
             <option value="10:00">10:00 AM</option>
             <option value="11:00">11:00 AM</option>
             <option value="12:00">12:00 PM</option>
@@ -198,7 +287,7 @@
       </div>
       <div class="form-group">
         <label>Pre-Sales Notes</label>
-        <textarea id="fNotes" placeholder="Budget, requirements, any context for the store team…"></textarea>
+        <textarea id="fNotes" placeholder="Budget, requirements, any context for the store team&#8230;"></textarea>
       </div>
       <div class="form-error" id="fErr"></div>
     </div>
@@ -212,47 +301,72 @@
 <div id="toast"></div>
 
 <script>
+// ── Config ──────────────────────────────────────────────────────
 const SB_URL='https://dzilftvisjgckmefpzxk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWxmdHZpc2pnY2ttZWZwenhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Njg0MTksImV4cCI6MjA5NzI0NDQxOX0.O-ZzJBs7TYEmXvVDf_7y70-skwSh7Ve4DuM-kBfXjP0';
 const SESSION_KEY='vs_user';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
+// ── Supabase helpers ─────────────────────────────────────────────
 async function sbGet(q){const r=await fetch(SB_URL+'/rest/v1/'+q,{headers:SB_H});return r.json();}
 async function sbPost(t,b){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:SB_H,body:JSON.stringify(b)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Save failed ('+r.status+')');}return r.json();}
 async function sbDel(t,id){const r=await fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:SB_H});if(!r.ok)throw new Error('Delete failed ('+r.status+')');return true;}
 
+// ── Constants ────────────────────────────────────────────────────
 const CATEGORIES=['Tiles','Laminates','Plywood','Panels','Wooden Flooring','Wallpapers','Quartz','HDHMR','Blockboard','Adhesives','Wall Cladding'];
 const SLOTS=[
-  {hour:10,value:'10:00',label:'10 AM – 11 AM'},
-  {hour:11,value:'11:00',label:'11 AM – 12 PM'},
-  {hour:12,value:'12:00',label:'12 PM – 1 PM'},
-  {hour:13,value:'13:00',label:'1 PM – 2 PM'},
-  {hour:14,value:'14:00',label:'2 PM – 3 PM'},
-  {hour:15,value:'15:00',label:'3 PM – 4 PM'},
-  {hour:16,value:'16:00',label:'4 PM – 5 PM'},
-  {hour:17,value:'17:00',label:'5 PM – 6 PM'},
-  {hour:18,value:'18:00',label:'6 PM – 7 PM'},
-  {hour:19,value:'19:00',label:'7 PM – 8 PM'},
-  {hour:20,value:'20:00',label:'8 PM – 9 PM'},
+  {hour:10,value:'10:00',label:'10 AM – 11 AM',band:'morning'},
+  {hour:11,value:'11:00',label:'11 AM – 12 PM',band:'morning'},
+  {hour:12,value:'12:00',label:'12 PM – 1 PM',band:'afternoon'},
+  {hour:13,value:'13:00',label:'1 PM – 2 PM',band:'afternoon'},
+  {hour:14,value:'14:00',label:'2 PM – 3 PM',band:'afternoon'},
+  {hour:15,value:'15:00',label:'3 PM – 4 PM',band:'afternoon'},
+  {hour:16,value:'16:00',label:'4 PM – 5 PM',band:'afternoon'},
+  {hour:17,value:'17:00',label:'5 PM – 6 PM',band:'evening'},
+  {hour:18,value:'18:00',label:'6 PM – 7 PM',band:'evening'},
+  {hour:19,value:'19:00',label:'7 PM – 8 PM',band:'evening'},
+  {hour:20,value:'20:00',label:'8 PM – 9 PM',band:'evening'},
 ];
+const BANDS={
+  morning:{label:'Morning',sub:'10 AM – 12 PM',hours:[10,11]},
+  afternoon:{label:'Afternoon',sub:'12 PM – 5 PM',hours:[12,13,14,15,16]},
+  evening:{label:'Evening',sub:'5 PM – 9 PM',hours:[17,18,19,20]}
+};
+const BAND_KEYS=['morning','afternoon','evening'];
+const BAND_SECTION_LABELS={
+  morning:'Morning — 10 AM to 12 PM',
+  afternoon:'Afternoon — 12 PM to 5 PM',
+  evening:'Evening — 5 PM to 9 PM'
+};
 const STATUS_LABEL={scheduled:'Scheduled',arrived:'Arrived',bm_assigned:'BM Assigned',completed:'Completed'};
 
-let SESSION=null;
-let allStores=[];
-let selectedStore=null;
-let selectedDay=dateStr(0);
-let dayVisits=[];
-let selectedCats=[];
-let otherCats=[];
-let pollTm=null;
+// ── State ────────────────────────────────────────────────────────
+let SESSION=null,allStores=[],selectedStore=null;
+let selectedDay='',weekVisits=[],dayVisits=[];
+let selectedCats=[],otherCats=[];
+let pollTm=null,holidaySet=new Set();
 
-let holidaySet=new Set();
-
+// ── Utils ────────────────────────────────────────────────────────
 function isWeekendOrHoliday(d){
   const dow=new Date(d+'T00:00:00').getDay();
   return dow===0||dow===6||holidaySet.has(d);
 }
+function dateStr(offset){
+  const d=new Date();d.setDate(d.getDate()+offset);
+  return d.toLocaleDateString('en-CA');
+}
+function fmtDay(d){
+  const dt=new Date(d+'T00:00:00');
+  return {wd:dt.toLocaleDateString('en-IN',{weekday:'short'}),day:dt.getDate()};
+}
+function fmtTime(t){
+  if(!t)return '';
+  const[h,m]=t.split(':').map(Number);
+  return (h%12||12)+':'+(m<10?'0'+m:m)+' '+(h>=12?'PM':'AM');
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// ── Auth ─────────────────────────────────────────────────────────
 function getSession(){
   const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
   if(!s||s.role!=='pre_sales'){window.location.href='Login.html';return null;}
@@ -260,237 +374,259 @@ function getSession(){
 }
 function signOut(){localStorage.removeItem(SESSION_KEY);window.location.href='Login.html';}
 
+// ── Toast ─────────────────────────────────────────────────────────
 let toastTm=null;
 function toast(msg,err=false){
   const t=document.getElementById('toast');t.textContent=msg;
   t.style.background=err?'var(--red)':'var(--ink)';
-  t.classList.add('show');clearTimeout(toastTm);toastTm=setTimeout(()=>t.classList.remove('show'),2800);
+  t.classList.add('show');clearTimeout(toastTm);
+  toastTm=setTimeout(()=>t.classList.remove('show'),2800);
 }
-
 function closeModal(){document.getElementById('schedOverlay').classList.remove('open');}
 
-function dateStr(offset){
-  const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10);
-}
-function fmtDay(d,i){
-  const dt=new Date(d+'T00:00:00');
-  const label=i===0?'Today':dt.toLocaleDateString('en-IN',{weekday:'short'});
-  return label+' '+dt.getDate();
-}
-function fmtTime(t){
-  if(!t)return '';
-  const[h,m]=t.split(':').map(Number);
-  const ap=h>=12?'PM':'AM';return (h%12||12)+':'+(m<10?'0'+m:m)+' '+ap;
-}
-function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-function buildDayNav(){
-  document.getElementById('dayNav').innerHTML=Array.from({length:7},(_,i)=>{
-    const d=dateStr(i);
-    return '<div class="day-chip'+(d===selectedDay?' active':'')+'" onclick="selectDay(\''+d+'\')">'+(fmtDay(d,i))+'</div>';
-  }).join('');
+// ── Load helpers ─────────────────────────────────────────────────
+function slotLoad(hour,dayStr,store,visits){
+  if(!store)return{load:0,pct:0,cls:'sb-green',label:'Free',barColor:'var(--green)',miniBg:'var(--greenbg)',miniColor:'var(--green)',sched:0,foot:0,bm:1};
+  const ff=store.footfall_data||{};
+  const ffSet=isWeekendOrHoliday(dayStr)?(ff.weekend||ff):(ff.weekday||ff);
+  const bm=store.bm_count||1;
+  const sched=visits.filter(v=>parseInt((v.visit_time||'').split(':')[0])===hour&&v.visit_status!=='completed').length;
+  const foot=ffSet[hour]||ffSet[String(hour)]||0;
+  const load=(sched+foot)/bm;
+  const pct=Math.min(100,Math.round(load*100));
+  let cls,label,barColor,miniBg,miniColor;
+  if(load<0.5){cls='sb-green';label='Free';barColor='var(--green)';miniBg='var(--greenbg)';miniColor='var(--green)';}
+  else if(load<0.8){cls='sb-orange';label='Busy';barColor='var(--amber)';miniBg='var(--amberbg)';miniColor='var(--amber)';}
+  else{cls='sb-red';label='Full';barColor='var(--red)';miniBg='var(--redbg)';miniColor='var(--red)';}
+  return{load,pct,cls,label,barColor,miniBg,miniColor,sched,foot,bm};
 }
 
-function selectDay(d){
-  selectedDay=d;
-  buildDayNav();
-  if(selectedStore)loadData();
+function bandLoad(bandKey,dayStr,store,visits){
+  const band=BANDS[bandKey];
+  if(!store||!band)return{cls:'wg-muted',count:0};
+  const ff=store.footfall_data||{};
+  const ffSet=isWeekendOrHoliday(dayStr)?(ff.weekend||ff):(ff.weekday||ff);
+  const bm=store.bm_count||1;
+  const dv=visits.filter(v=>v.visit_date===dayStr&&v.visit_status!=='completed');
+  let totalLoad=0,count=0;
+  band.hours.forEach(h=>{
+    const s=dv.filter(v=>parseInt((v.visit_time||'').split(':')[0])===h).length;
+    const f=ffSet[h]||ffSet[String(h)]||0;
+    totalLoad+=(s+f)/bm;
+    count+=s;
+  });
+  const avg=totalLoad/band.hours.length;
+  const cls=avg<0.5?'wg-green':avg<0.8?'wg-orange':'wg-red';
+  return{cls,count};
 }
 
+// ── Store loading ─────────────────────────────────────────────────
 async function loadStores(){
-  const [res,hlRes]=await Promise.all([
+  const[res,hlRes]=await Promise.all([
     sbGet('stores?select=id,name,bm_count,footfall_data&order=name.asc'),
     sbGet('public_holidays?select=date')
   ]);
   allStores=Array.isArray(res)?res:[];
   holidaySet=new Set(Array.isArray(hlRes)?hlRes.map(h=>h.date):[]);
   const sel=document.getElementById('storeSelect');
-  if(!allStores.length){
-    sel.innerHTML='<option value="">No stores set up yet — add them in Admin</option>';
-    return;
-  }
+  if(!allStores.length){sel.innerHTML='<option value="">No stores set up yet</option>';return;}
   sel.innerHTML='<option value="">Select store…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
-  populateFormStore();
-}
-
-function populateFormStore(){
-  const sel=document.getElementById('fStore');
-  sel.innerHTML='<option value="">Select store…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
-  if(selectedStore)sel.value=selectedStore.id;
 }
 
 function onStoreChange(storeId){
   selectedStore=storeId?allStores.find(s=>s.id===storeId)||null:null;
-  if(!selectedStore){
-    document.getElementById('contentArea').innerHTML='<div class="no-store"><div><div class="e-ico">&#127978;</div><div class="e-msg">Select a store to get started</div><div class="e-sub">You\'ll see slot capacity and today\'s visits.</div></div></div>';
-    return;
-  }
-  document.getElementById('fStore').value=storeId;
+  const wrap=document.getElementById('mainWrap');
+  const ns=document.getElementById('noStore');
+  if(!selectedStore){wrap.style.display='none';ns.style.display='flex';clearInterval(pollTm);return;}
+  ns.style.display='none';
+  wrap.style.display='flex';
+  document.getElementById('glanceStoreName').textContent=selectedStore.name;
+  selectedDay=dateStr(0);
   loadData();
   clearInterval(pollTm);
   pollTm=setInterval(loadData,60000);
 }
 
-function onFormStoreChange(storeId){
-  // keep form store select in sync, no side effects needed
-}
-
 async function loadData(){
   if(!selectedStore)return;
-  fetch('/api/kylas-sync').catch(e=>console.warn('Kylas sync failed',e));
-  document.getElementById('contentArea').innerHTML=`
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Slot Capacity</h2>
-        <div class="legend">
-          <span><span class="ldot" style="background:var(--green)"></span>Free &lt;50%</span>
-          <span><span class="ldot" style="background:var(--amber)"></span>Busy 50–80%</span>
-          <span><span class="ldot" style="background:var(--red)"></span>Full ≥80%</span>
-        </div>
-      </div>
-      <div id="slotGrid"><div class="loading-row"><span class="spinner"></span></div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h2 id="visitsPanelTitle">Visits</h2>
-        <span class="panel-sub" id="visitsPanelSub"></span>
-      </div>
-      <div id="visitsList"><div class="loading-row"><span class="spinner"></span></div></div>
-    </div>`;
+  fetch('/api/kylas-sync').catch(e=>console.warn('Kylas sync',e));
+  const from=dateStr(0),to=dateStr(6);
+  const res=await sbGet('store_visits?store_id=eq.'+selectedStore.id+'&visit_date=gte.'+from+'&visit_date=lte.'+to+'&order=visit_date.asc,visit_time.asc&select=*');
+  weekVisits=Array.isArray(res)?res:[];
+  setDay(selectedDay||dateStr(0));
+}
 
-  const [visitsRes]=await Promise.all([
-    sbGet('store_visits?store_id=eq.'+selectedStore.id+'&visit_date=eq.'+selectedDay+'&order=visit_time.asc&select=*')
-  ]);
-  dayVisits=Array.isArray(visitsRes)?visitsRes:[];
+// ── Day selection ─────────────────────────────────────────────────
+function setDay(d){
+  selectedDay=d;
+  dayVisits=weekVisits.filter(v=>v.visit_date===d);
+  renderGlance();
   renderSlots();
-  renderVisitsList();
+  renderVisits();
 }
 
+// ── 1. Render Week at a Glance ────────────────────────────────────
+function renderGlance(){
+  const days=Array.from({length:7},(_,i)=>({d:dateStr(i),i}));
+  let html='';
+
+  // Corner + day headers
+  html+='<div class="wk-corner"></div>';
+  days.forEach(({d,i})=>{
+    const{wd,day}=fmtDay(d);
+    const sel=d===selectedDay;
+    html+='<div class="wk-day-hd'+(sel?' sel':'')+'" onclick="setDay(\''+d+'\')">'
+      +'<div class="wk-wd">'+(i===0?'TODAY':wd.toUpperCase())+'</div>'
+      +'<div class="wk-num">'+day+'</div>'
+      +'</div>';
+  });
+
+  // Band rows
+  BAND_KEYS.forEach(bk=>{
+    const band=BANDS[bk];
+    html+='<div class="wk-band-lbl"><span class="wk-bl-name">'+band.label+'</span><span class="wk-bl-sub">'+band.sub+'</span></div>';
+    days.forEach(({d})=>{
+      const sel=d===selectedDay;
+      const{cls,count}=bandLoad(bk,d,selectedStore,weekVisits);
+      html+='<div class="wk-cell'+(sel?' sel':'')+'" onclick="setDay(\''+d+'\')">'
+        +'<div class="wk-inner '+cls+'">'+(count||'—')+'</div>'
+        +'</div>';
+    });
+  });
+
+  document.getElementById('weekGrid').innerHTML=html;
+}
+
+// ── 2. Render Slot Capacity ───────────────────────────────────────
 function renderSlots(){
-  const store=allStores.find(s=>s.id===selectedStore.id)||selectedStore;
-  const bmCount=store.bm_count||1;
-  const ff=store.footfall_data||{};
-  const ffSet=isWeekendOrHoliday(selectedDay)?(ff.weekend||ff):(ff.weekday||ff);
-  const rows=SLOTS.map(s=>{
-    const scheduled=dayVisits.filter(v=>{
-      const h=parseInt((v.visit_time||'').split(':')[0]);
-      return h===s.hour&&v.visit_status!=='completed';
-    }).length;
-    const footfall=ffSet[s.hour]||ffSet[String(s.hour)]||0;
-    const load=(scheduled+footfall)/bmCount;
-    const pct=Math.min(100,Math.round(load*100));
-    let cls,label,barColor;
-    if(load<0.5){cls='sb-green';label='Free';barColor='var(--green)';}
-    else if(load<0.8){cls='sb-orange';label='Busy';barColor='var(--amber)';}
-    else{cls='sb-red';label='Full';barColor='var(--red)';}
-    return '<div class="slot-row" onclick="openSchedule(\''+s.value+'\')">'+
-      '<div class="slot-time">'+s.label+'</div>'+
-      '<div class="slot-bar-wrap">'+
-        '<div class="slot-bar"><div class="slot-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
-        '<span class="slot-badge '+cls+'">'+label+'</span>'+
-      '</div>'+
-      '<div class="slot-count">'+(scheduled+footfall)+' / '+bmCount+'</div>'+
-      '<div class="slot-hint">+ Schedule</div>'+
-    '</div>';
-  }).join('');
+  let lastBand='',html='';
+  SLOTS.forEach(s=>{
+    if(s.band!==lastBand){
+      lastBand=s.band;
+      html+='<div class="slot-section">'+BAND_SECTION_LABELS[s.band]+'</div>';
+    }
+    const{pct,cls,label,barColor,sched,foot,bm}=slotLoad(s.hour,selectedDay,selectedStore,dayVisits);
+    html+='<div class="slot-row" onclick="openSchedule(\''+s.value+'\')">'
+      +'<div class="slot-time">'+s.label+'</div>'
+      +'<div class="slot-bar-wrap">'
+        +'<div class="slot-bar"><div class="slot-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
+        +'<span class="slot-badge '+cls+'">'+label+'</span>'
+      +'</div>'
+      +'<div class="slot-count">'+(sched+foot)+' / '+bm+'</div>'
+      +'<div class="slot-hint">+ Schedule</div>'
+    +'</div>';
+  });
   const el=document.getElementById('slotGrid');
-  if(el)el.innerHTML=rows;
+  if(el)el.innerHTML=html;
 }
 
-function renderVisitsList(){
+// ── 3. Render Visits ──────────────────────────────────────────────
+function renderVisits(){
   const dt=new Date(selectedDay+'T00:00:00');
   const dayLabel=dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
   const el=document.getElementById('visitsList');
   const title=document.getElementById('visitsPanelTitle');
   const sub=document.getElementById('visitsPanelSub');
   if(title)title.textContent='Visits — '+dayLabel;
-  if(sub)sub.textContent=dayVisits.length+' scheduled';
+  if(sub)sub.textContent=dayVisits.length+(dayVisits.length===1?' visit':' visits');
   if(!el)return;
   if(!dayVisits.length){
-    el.innerHTML='<div class="empty"><div class="e-ico">&#128197;</div><div class="e-msg">No visits on this day</div><div class="e-sub">Click a slot or "+ Schedule Visit" to add one.</div></div>';
+    el.innerHTML='<div class="empty"><div class="e-ico">&#128197;</div><div class="e-msg">No visits on this day</div><div class="e-sub">Click a slot or &quot;+ Schedule Visit&quot; to add one.</div></div>';
     return;
   }
   el.innerHTML=dayVisits.map(v=>{
+    const h=parseInt((v.visit_time||'').split(':')[0]);
+    const{barColor,miniBg,miniColor}=slotLoad(h,selectedDay,selectedStore,dayVisits);
     const cats=Array.isArray(v.categories)?v.categories:[];
     const stLabel=STATUS_LABEL[v.visit_status]||v.visit_status;
-    return '<div class="visit-card">'+
-      '<div class="vc-time">'+fmtTime(v.visit_time)+'</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div class="vc-name">'+esc(v.customer_name)+'</div>'+
-        '<div class="vc-phone">'+esc(v.phone||'')+'</div>'+
-        (cats.length?'<div class="vc-cats">'+cats.map(c=>'<span class="cat-tag">'+esc(c)+'</span>').join('')+'</div>':'')+
-        (v.presales_notes?'<div class="vc-notes">'+esc(v.presales_notes)+'</div>':'')+
-        '<div class="vc-footer">'+
-          '<span class="chip c-'+v.visit_status+'">'+stLabel+'</span>'+
-          (v.visit_status==='scheduled'&&!v.kylas_id?'<button class="btn-del" onclick="deleteVisit(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Cancel visit</button>':'')+
-        '</div>'+
-      '</div>'+
-    '</div>';
+
+    // Availability chip
+    let availChip='';
+    const as=v.availability_status;
+    if(!as){
+      availChip='<span class="avail-chip av-pending">Pending</span>';
+    }else if(as==='available'){
+      availChip='<span class="avail-chip av-available">Available</span>';
+    }else if(as==='partial'){
+      availChip='<span class="avail-chip av-partial">Partial</span>';
+    }else if(as==='unavailable'){
+      availChip='<span class="avail-chip av-unavailable">Unavailable</span>';
+    }
+
+    // Presales notified badge — only for partial or unavailable
+    let notifBadge='';
+    if(as==='partial'||as==='unavailable'){
+      if(v.presales_notified===true){
+        notifBadge='<span class="notif-badge nb-informed">Client informed</span>';
+      }else{
+        notifBadge='<span class="notif-badge nb-not-informed">Client not yet informed</span>';
+      }
+    }
+
+    // Availability notes
+    const availNotesHtml=v.availability_notes
+      ?'<div class="avail-notes">'+esc(v.availability_notes)+'</div>'
+      :'';
+
+    return '<div class="visit-card">'
+      +'<div class="vc-stripe" style="background:'+barColor+'"></div>'
+      +'<div class="vc-time">'+fmtTime(v.visit_time)+'</div>'
+      +'<div class="vc-body">'
+        +'<div class="vc-name">'+esc(v.customer_name)+'</div>'
+        +'<div class="vc-phone">'+esc(v.phone||'')+'</div>'
+        +(cats.length?'<div class="vc-cats">'+cats.map(c=>'<span class="cat-tag">'+esc(c)+'</span>').join('')+'</div>':'')
+        +(v.presales_notes?'<div class="vc-notes">'+esc(v.presales_notes)+'</div>':'')
+        +'<div class="vc-avail">'
+          +availChip
+          +notifBadge
+          +availNotesHtml
+        +'</div>'
+        +'<div class="vc-footer">'
+          +'<span class="chip c-'+v.visit_status+'">'+stLabel+'</span>'
+          +(v.visit_status==='scheduled'&&!v.kylas_id?'<button class="btn-del" onclick="deleteVisit(\''+v.id+'\',\''+esc(v.customer_name)+'\')">Cancel</button>':'')
+        +'</div>'
+      +'</div>'
+    +'</div>';
   }).join('');
 }
 
-/* --- Schedule Visit --- */
+// ── Schedule Visit modal ──────────────────────────────────────────
 function openSchedule(timeValue){
-  if(!allStores.length){toast('No stores set up yet — add them in Admin',true);return;}
-  selectedCats=[];
-  otherCats=[];
+  if(!allStores.length){toast('No stores set up yet',true);return;}
+  selectedCats=[];otherCats=[];
   document.getElementById('fName').value='';
   document.getElementById('fPhone').value='';
   document.getElementById('fDate').value=selectedDay;
   document.getElementById('fTime').value=timeValue||'';
   document.getElementById('fNotes').value='';
   document.getElementById('fErr').classList.remove('show');
-  document.getElementById('schedBtn').disabled=false;
-  document.getElementById('schedBtn').textContent='Schedule Visit';
-  populateFormStore();
-  if(selectedStore)document.getElementById('fStore').value=selectedStore.id;
+  const btn=document.getElementById('schedBtn');
+  btn.disabled=false;btn.textContent='Schedule Visit';
+  const fs=document.getElementById('fStore');
+  fs.innerHTML='<option value="">…</option>'+allStores.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
+  if(selectedStore)fs.value=selectedStore.id;
   buildCatGrid();
   document.getElementById('schedOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('fName').focus(),50);
 }
 
 function buildCatGrid(){
-  const standardChips=CATEGORIES.map(c=>
-    '<button type="button" class="cat-btn'+(selectedCats.includes(c)?' active':'')+'" onclick="toggleCat(\''+c+'\')">'+esc(c)+'</button>'
-  ).join('');
-  const customChips=otherCats.map((c,i)=>
-    '<span class="cat-btn active" style="display:inline-flex;align-items:center;gap:5px">'+esc(c)+
-    '<button type="button" onclick="removeOtherCat('+i+')" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;padding:0;line-height:1;opacity:.75">&times;</button></span>'
-  ).join('');
-  document.getElementById('catGrid').innerHTML=
-    standardChips+
-    '<div style="width:100%;border-top:1px solid var(--line);margin:4px 0"></div>'+
-    '<div style="width:100%">'+
-      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Other Categories</div>'+
-      (customChips?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+customChips+'</div>':'')+
-      '<div style="display:flex;gap:6px">'+
-        '<input id="otherCatInput" type="text" placeholder="e.g. Veneer" style="flex:1;padding:7px 10px;border:2px solid var(--line);border-radius:9px;font-size:13px;color:var(--ink);" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addOtherCat();}"/>'+
-        '<button type="button" onclick="addOtherCat()" style="padding:7px 13px;background:var(--navy);color:#fff;border:0;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;">Add</button>'+
-      '</div>'+
-    '</div>';
+  const std=CATEGORIES.map(c=>'<button type="button" class="cat-btn'+(selectedCats.includes(c)?' active':'')+'" onclick="toggleCat(\''+c+'\')">'+esc(c)+'</button>').join('');
+  const cust=otherCats.map((c,i)=>'<span class="cat-btn active" style="display:inline-flex;align-items:center;gap:5px">'+esc(c)+'<button type="button" onclick="removeOtherCat('+i+')" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;padding:0;opacity:.75">&times;</button></span>').join('');
+  document.getElementById('catGrid').innerHTML=std
+    +'<div style="width:100%;border-top:1px solid var(--line);margin:4px 0"></div>'
+    +'<div style="width:100%">'
+      +'<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Other Categories</div>'
+      +(cust?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+cust+'</div>':'')
+      +'<div style="display:flex;gap:6px">'
+        +'<input id="otherCatInput" type="text" placeholder="e.g. Veneer" style="flex:1;padding:7px 10px;border:2px solid var(--line);border-radius:9px;font-size:13px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addOtherCat();}"/>'
+        +'<button type="button" onclick="addOtherCat()" style="padding:7px 13px;background:var(--navy);color:#fff;border:0;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;">Add</button>'
+      +'</div>'
+    +'</div>';
 }
-
-function toggleCat(c){
-  if(selectedCats.includes(c))selectedCats=selectedCats.filter(x=>x!==c);
-  else selectedCats.push(c);
-  buildCatGrid();
-}
-
-function addOtherCat(){
-  const inp=document.getElementById('otherCatInput');
-  if(!inp)return;
-  const val=inp.value.trim();
-  if(!val||otherCats.map(s=>s.toLowerCase()).includes(val.toLowerCase()))return;
-  otherCats.push(val);
-  inp.value='';
-  buildCatGrid();
-  setTimeout(()=>{const el=document.getElementById('otherCatInput');if(el)el.focus();},10);
-}
-
-function removeOtherCat(i){
-  otherCats.splice(i,1);
-  buildCatGrid();
-}
+function toggleCat(c){if(selectedCats.includes(c))selectedCats=selectedCats.filter(x=>x!==c);else selectedCats.push(c);buildCatGrid();}
+function addOtherCat(){const inp=document.getElementById('otherCatInput');if(!inp)return;const v=inp.value.trim();if(!v||otherCats.map(s=>s.toLowerCase()).includes(v.toLowerCase()))return;otherCats.push(v);inp.value='';buildCatGrid();setTimeout(()=>{const e=document.getElementById('otherCatInput');if(e)e.focus();},10);}
+function removeOtherCat(i){otherCats.splice(i,1);buildCatGrid();}
 
 async function doSchedule(){
   const err=document.getElementById('fErr');err.classList.remove('show');
@@ -500,51 +636,32 @@ async function doSchedule(){
   const date=document.getElementById('fDate').value;
   const time=document.getElementById('fTime').value;
   const notes=document.getElementById('fNotes').value.trim();
-
   if(!name){err.textContent='Customer name is required.';err.classList.add('show');return;}
   if(!phone||!/^\d{10}$/.test(phone.replace(/\s/g,''))){err.textContent='Enter a valid 10-digit phone number.';err.classList.add('show');return;}
   if(!storeId){err.textContent='Select a store.';err.classList.add('show');return;}
   if(!date){err.textContent='Select a visit date.';err.classList.add('show');return;}
   if(!time){err.textContent='Select a time slot.';err.classList.add('show');return;}
-
-  const btn=document.getElementById('schedBtn');
-  btn.disabled=true;btn.textContent='Scheduling…';
+  const btn=document.getElementById('schedBtn');btn.disabled=true;btn.textContent='Scheduling…';
   try{
-    await sbPost('store_visits',{
-      store_id:storeId,
-      customer_name:name,
-      phone:phone.replace(/\s/g,''),
-      visit_date:date,
-      visit_time:time,
-      categories:[...selectedCats,...otherCats],
-      presales_notes:notes||null,
-      visit_status:'scheduled'
-    });
-    toast('Visit scheduled for '+name);
-    closeModal();
-    if(selectedStore&&storeId===selectedStore.id&&date===selectedDay)loadData();
+    await sbPost('store_visits',{store_id:storeId,customer_name:name,phone:phone.replace(/\s/g,''),visit_date:date,visit_time:time,categories:[...selectedCats,...otherCats],presales_notes:notes||null,visit_status:'scheduled'});
+    toast('Visit scheduled for '+name);closeModal();
+    if(selectedStore&&storeId===selectedStore.id)loadData();
   }catch(e){
-    err.textContent='Failed to schedule — check your connection and try again.';err.classList.add('show');
+    err.textContent='Failed to schedule — check your connection.';err.classList.add('show');
     btn.disabled=false;btn.textContent='Schedule Visit';
   }
 }
 
 async function deleteVisit(id,name){
   if(!confirm('Cancel the visit for '+name+'? This cannot be undone.'))return;
-  try{
-    await sbDel('store_visits',id);
-    toast('Visit cancelled');
-    loadData();
-  }catch(e){
-    toast('Failed to cancel — try again',true);
-  }
+  try{await sbDel('store_visits',id);toast('Visit cancelled');loadData();}
+  catch(e){toast('Failed to cancel — try again',true);}
 }
 
-/* --- Init --- */
+// ── Init ─────────────────────────────────────────────────────────
 SESSION=getSession();
 if(SESSION){
   document.getElementById('userPill').textContent=SESSION.name;
-  buildDayNav();
   loadStores();
 }
 </script>
