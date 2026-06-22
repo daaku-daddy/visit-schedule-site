@@ -291,6 +291,13 @@ Auto-deploys are linked: every push to master also triggers Vercel via GitHub in
 15. **Admin Holidays Add button** — has `id="hlAddBtn"` for double-submit guard in `addHoliday()`. On re-render (after success), the button is recreated fresh so no stale disabled state.
 
 ## Pending / Still to Build
+
+### Pre Sales Dashboard UI (confirmed missing as of 2026-06-22)
+The original design mockup (shared by user) included two features that were explicitly excluded from the first implementation plan but the user still wants:
+- **"Week at a Glance" panel**: 7-day mini calendar grid at top of page. Columns = days (today + 6 forward). Rows = Morning (10 AM–12 PM) / Afternoon (12 PM–5 PM) / Evening (5 PM–9 PM). Each cell shows aggregate load count, color-coded green/orange/red. Clicking a day selects it for the slot detail view below.
+- **Morning / Afternoon / Evening section dividers** in the Slot Capacity panel: group the 11 hourly slot rows under MORNING (10–11 AM), AFTERNOON (12 PM–4 PM), EVENING (5–9 PM) section headers.
+
+### Kylas & Ops
 - **Kylas field mapping**: fetch a real lead once "Lead Read" permission is enabled on API key `f3586066-...`, confirm field names, update `mapLead()` in `api/kylas-sync.js`, set `KYLAS_STORE_MAP` env var
 - **Vercel env vars**: set `KYLAS_API_KEY`, `SUPABASE_KEY`, `KYLAS_STORE_MAP` in Vercel dashboard before Kylas sync goes live
 - **Run `footfall_migration.sql`** in Supabase SQL editor to seed actual footfall data for all 3 stores
